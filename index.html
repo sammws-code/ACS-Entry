@@ -1,0 +1,2199 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0B454D">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ACS Offline">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<title>ACS Offline · بوابة ACS بدون إنترنت</title>
+<style>
+:root{
+  --ink:#13262F; --muted:#586972; --paper:#F2F5F6; --card:#FFFFFF; --line:#D3DDE1; --line2:#E6ECEE;
+  --teal:#0E5A64; --teal2:#E1EFF0; --teal3:#0B454D;
+  --red:#B3263E; --red2:#FBE8EB; --amber:#8F5F00; --amber2:#FFF3D3; --green:#1B7A4E; --green2:#E2F3EA;
+  --r:10px;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:'IBM Plex Sans Arabic','Segoe UI',Tahoma,Arial,sans-serif;font-size:15px;line-height:1.55}
+button,input,select,textarea{font:inherit;color:inherit}
+a{color:var(--teal)}
+.ar{font-weight:600}
+.en{color:var(--muted);font-size:.86em;direction:ltr;unicode-bidi:embed}
+.bi{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}
+.bi .en{margin-inline-start:auto;text-align:left}
+.hide{display:none!important}
+.muted{color:var(--muted)}
+
+/* shell */
+.top{background:var(--teal3);color:#fff;padding:10px 18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.brand{display:flex;flex-direction:column;line-height:1.25}
+.brand b{font-size:1.05rem}
+.brand span{font-size:.78rem;opacity:.8;direction:ltr;text-align:right}
+.top .who{margin-inline-start:auto;display:flex;align-items:center;gap:10px;font-size:.88rem}
+.top .who .role{background:rgba(255,255,255,.14);padding:2px 10px;border-radius:99px}
+.nav{background:#fff;border-bottom:1px solid var(--line);display:flex;gap:2px;padding:0 12px;overflow-x:auto;position:sticky;top:0;z-index:5}
+.nav button{border:0;background:none;padding:12px 14px;cursor:pointer;border-bottom:3px solid transparent;display:flex;flex-direction:column;align-items:center;line-height:1.25;white-space:nowrap;color:var(--muted)}
+.nav button .en{font-size:.72rem}
+.nav button.on{border-bottom-color:var(--teal);color:var(--teal3)}
+.nav button:hover{background:var(--paper)}
+main{max-width:1120px;margin:0 auto;padding:18px 14px 120px}
+h2{margin:6px 0 14px;font-size:1.25rem}
+h3{margin:0 0 10px;font-size:1.02rem}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px;margin-bottom:14px}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
+.grow{flex:1 1 200px}
+.sp{height:8px}
+
+/* buttons */
+.btn{border:1px solid var(--teal);background:var(--teal);color:#fff;padding:9px 16px;border-radius:8px;cursor:pointer;display:inline-flex;flex-direction:column;align-items:center;line-height:1.25;min-height:42px;justify-content:center}
+.btn .en{color:rgba(255,255,255,.8);font-size:.72rem}
+.btn:hover{background:var(--teal3)}
+.btn.alt{background:#fff;color:var(--teal3)}
+.btn.alt .en{color:var(--muted)}
+.btn.alt:hover{background:var(--teal2)}
+.btn.danger{background:#fff;border-color:var(--red);color:var(--red)}
+.btn.danger .en{color:var(--red);opacity:.8}
+.btn.danger:hover{background:var(--red2)}
+.btn.small{padding:5px 11px;min-height:34px;font-size:.88rem}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+:focus-visible{outline:3px solid #6FB4BC;outline-offset:2px}
+
+/* inputs */
+label.l{display:flex;flex-direction:column;gap:0;font-size:.92rem;margin-bottom:5px;line-height:1.3}
+label.l .en{text-align:left;margin:0}
+.dtrow{display:grid;grid-template-columns:1.25fr 1fr;gap:8px}
+input[type=text],input[type=password],input[type=date],input[type=datetime-local],input[type=number],select,textarea{width:100%;padding:9px 11px;border:1px solid #B9C7CC;border-radius:8px;background:#fff;min-height:42px}
+input[dir=ltr],.ltr{direction:ltr;text-align:left}
+textarea{min-height:76px;resize:vertical}
+input:disabled,select:disabled,textarea:disabled{background:#EEF2F3;color:#6b7a81}
+
+/* login */
+.login{max-width:410px;margin:56px auto;padding:0 14px}
+.login .card{padding:24px}
+.err-box{background:var(--red2);border:1px solid #E7B2BB;color:#7D1327;padding:9px 12px;border-radius:8px;margin:10px 0}
+.ok-box{background:var(--green2);border:1px solid #AAD7BF;color:#14573a;padding:9px 12px;border-radius:8px;margin:10px 0}
+.warn-box{background:var(--amber2);border:1px solid #E8CF8C;color:#5f4000;padding:9px 12px;border-radius:8px;margin:10px 0}
+
+/* hospital picker */
+.hgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+.hcard{background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:14px;cursor:pointer;text-align:start;display:flex;flex-direction:column;gap:6px;border-inline-start:5px solid var(--teal)}
+.hcard:hover{background:var(--teal2)}
+.hcard .nm{font-weight:700}
+.hcard .cnt{display:flex;gap:6px;flex-wrap:wrap;font-size:.8rem;margin-top:4px}
+.pill{display:inline-block;padding:1px 9px;border-radius:99px;font-size:.78rem;background:var(--paper);border:1px solid var(--line)}
+.pill.d{background:var(--amber2);border-color:#E8CF8C;color:#5f4000}
+.pill.s{background:var(--teal2);border-color:#B5D6D9;color:var(--teal3)}
+.pill.v{background:var(--green2);border-color:#AAD7BF;color:#14573a}
+.pill.x{background:var(--red2);border-color:#E7B2BB;color:#7D1327}
+
+/* tables */
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:#fff}
+table{border-collapse:collapse;width:100%;font-size:.9rem}
+th,td{padding:8px 10px;border-bottom:1px solid var(--line2);text-align:start;white-space:nowrap}
+th{background:#F5F8F9;font-weight:600;position:sticky;top:0}
+tr.clk{cursor:pointer}
+tr.clk:hover td{background:var(--teal2)}
+td.num,th.num{text-align:end;font-variant-numeric:tabular-nums}
+td.wrap{white-space:normal}
+
+/* form */
+.fhead{display:flex;gap:14px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+.code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:1.15rem;font-weight:700;direction:ltr}
+.snav{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 2px}
+.snav a{padding:4px 11px;border:1px solid var(--line);border-radius:99px;font-size:.82rem;text-decoration:none;color:var(--ink);background:#fff}
+.snav a:hover{background:var(--teal2)}
+.sec{scroll-margin-top:62px}
+.sec>h3{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;border-bottom:2px solid var(--teal2);padding-bottom:8px;margin-bottom:14px}
+.fgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px 18px}
+.fld .hint{font-size:.78rem;color:var(--muted);margin-top:3px}
+.fld .hint .en{display:block}
+.fld.err input,.fld.err select,.fld.err textarea{border-color:var(--red);background:#FFF8F9}
+.fld .emsg{color:var(--red);font-size:.82rem;margin-top:4px}
+.fld .emsg .en{color:var(--red);opacity:.85;display:block}
+.fld.wide{grid-column:1/-1}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips input{position:absolute;opacity:0;pointer-events:none}
+.chips label{border:1px solid #B9C7CC;border-radius:8px;padding:6px 12px;cursor:pointer;background:#fff;display:flex;flex-direction:column;align-items:center;line-height:1.25;min-height:42px;justify-content:center;min-width:64px}
+.chips label .en{font-size:.7rem}
+.chips label:hover{background:var(--teal2)}
+.chips input:checked+label{background:var(--teal);border-color:var(--teal);color:#fff}
+.chips input:checked+label .en{color:rgba(255,255,255,.82)}
+.chips input:focus-visible+label{outline:3px solid #6FB4BC;outline-offset:2px}
+.chips.dis label{opacity:.6;cursor:not-allowed}
+.nrrow{display:flex;gap:8px;align-items:stretch}
+.nrrow .u{align-self:center;color:var(--muted);font-size:.8rem;min-width:34px;direction:ltr}
+.nrchk{display:flex;align-items:center;gap:5px;border:1px solid #B9C7CC;border-radius:8px;padding:0 10px;background:#fff;cursor:pointer;white-space:nowrap}
+.nrchk input{width:auto;min-height:0}
+.calc{background:var(--teal2);border-radius:var(--r);padding:12px;margin-top:16px}
+.calc h4{margin:0 0 8px;font-size:.9rem;color:var(--teal3)}
+.cgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px}
+.cv{background:#fff;border-radius:8px;padding:7px 10px}
+.cv .k{font-size:.78rem;color:var(--muted)}
+.cv .v{font-weight:700;font-size:1rem;direction:ltr;text-align:start}
+.cv .v.yes{color:var(--red)} .cv .v.good{color:var(--green)} .cv .v.na{color:#8a979d;font-weight:400}
+
+/* S-to-D gauge — the characteristic element */
+.gauge{background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;margin:14px 0 4px}
+.gauge .track{position:relative;height:16px;background:linear-gradient(90deg,#E1EFF0 0 50%,#F8DDE2 50% 100%);border-radius:99px;margin:22px 4px 26px;direction:ltr}
+.gauge .fill{position:absolute;left:0;top:0;height:100%;border-radius:99px;background:var(--teal);transition:width .25s}
+.gauge .fill.late{background:var(--red)}
+.gauge .tick{position:absolute;top:-6px;width:2px;height:28px;background:var(--ink)}
+.gauge .tl{position:absolute;top:26px;transform:translateX(-50%);font-size:.72rem;color:var(--muted)}
+.gauge .tl.tt{top:-22px}
+.gauge .read{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;align-items:baseline}
+.gauge .big{font-size:1.15rem;font-weight:700;direction:ltr}
+
+.foot{position:fixed;bottom:0;inset-inline:0;background:#fff;border-top:1px solid var(--line);padding:9px 14px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap;z-index:6}
+.badge{padding:2px 10px;border-radius:99px;font-size:.8rem;font-weight:600}
+.badge.Draft{background:var(--amber2);color:#5f4000}.badge.Submitted{background:var(--teal2);color:var(--teal3)}.badge.Verified{background:var(--green2);color:#14573a}.badge.Excluded{background:var(--red2);color:#7D1327}
+
+/* modal + toast */
+.mback{position:fixed;inset:0;background:rgba(19,38,47,.5);display:flex;align-items:center;justify-content:center;padding:14px;z-index:20}
+.modal{background:#fff;border-radius:12px;max-width:560px;width:100%;max-height:90vh;overflow:auto;padding:18px}
+.modal h3{margin-top:0}
+.modal .acts{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;margin-top:14px}
+.rlist label{display:flex;gap:8px;align-items:flex-start;padding:7px 8px;border-radius:8px;cursor:pointer}
+.rlist label:hover{background:var(--paper)}
+.rlist input{width:auto;min-height:0;margin-top:5px}
+#toast{position:fixed;top:14px;inset-inline:0;display:flex;justify-content:center;pointer-events:none;z-index:30}
+#toast div{background:var(--ink);color:#fff;padding:9px 16px;border-radius:8px;max-width:90%;box-shadow:0 4px 18px rgba(0,0,0,.25)}
+#toast div.bad{background:var(--red)}
+
+/* dashboard */
+.flow{display:flex;flex-wrap:wrap;gap:10px;align-items:stretch}
+.fbox{flex:1 1 150px;border:1px solid var(--line);border-radius:var(--r);padding:10px 12px;background:#fff}
+.fbox .n{font-size:1.5rem;font-weight:700;direction:ltr;text-align:start}
+.fbox.k{border-top:4px solid var(--teal)} .fbox.x{border-top:4px solid var(--red)} .fbox.g{border-top:4px solid var(--green)}
+.pbar{height:14px;background:var(--line2);border-radius:99px;overflow:hidden;direction:ltr}
+.pbar i{display:block;height:100%;background:var(--teal)}
+.al{padding:8px 12px;border-radius:8px;margin-bottom:6px;border:1px solid var(--line)}
+.al.warn{background:var(--amber2);border-color:#E8CF8C}.al.ok{background:var(--green2);border-color:#AAD7BF}.al.info{background:#fff}
+.heat0{background:#fff}.heat1{background:#FFF3D3}.heat2{background:#FBD9A8}.heat3{background:#F6B3B3}
+.tabs2{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.tabs2 button{border:1px solid var(--line);background:#fff;border-radius:99px;padding:5px 14px;cursor:pointer}
+.tabs2 button.on{background:var(--teal);color:#fff;border-color:var(--teal)}
+
+/* guide */
+.guide h3{margin-top:4px}
+.guide p{margin:6px 0}
+.guide .pair{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:8px 0}
+.guide .pair>div:last-child{direction:ltr;color:#33454d;border-inline-start:1px solid var(--line);padding-inline-start:14px}
+.guide ul{margin:6px 0;padding-inline-start:20px}
+.gtool{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0;position:sticky;top:0;z-index:5;background:var(--paper);padding:6px 0}
+.gedit{outline:2px dashed var(--line);outline-offset:6px;min-height:300px;border-radius:6px}
+.gedit:focus{outline-color:var(--teal2)}
+@media(max-width:760px){.guide .pair{grid-template-columns:1fr}.guide .pair>div:last-child{border:0;padding:0;border-top:1px dashed var(--line);padding-top:6px}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+
+p.muted>.ar,p.muted>.en{display:block}
+
+body{padding-top:env(safe-area-inset-top)}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="toast" aria-live="polite"></div>
+<div id="modal-root"></div>
+<script>
+var ACS_OFFLINE = true;
+/* ======================================================================
+   ACS PORTAL — SHARED SCHEMA + LOGIC
+   Identical code runs on the server (Code.gs) and in the browser (Index.html).
+   Single source of truth: fields, options, calculated variables, validation.
+   ====================================================================== */
+var ACS_SCHEMA_VERSION = '1.0';
+var ACS_YEARS = [2020, 2021, 2022, 2023, 2024, 2025, 2026];
+var ACS_DEFAULT_YEAR = 2026;
+var ACS_LVEF_ALERT_PCT = 20;
+var ACS_STATUSES = ['Draft', 'Submitted', 'Verified', 'Excluded'];
+
+function _o(v, ar) { return { v: v, ar: ar }; }
+var _YN = [_o('Yes', 'نعم'), _o('No', 'لا')];
+var _YNNR = [_o('Yes', 'نعم'), _o('No', 'لا'), _o('NR', 'غير مسجل')];
+var _NR = _o('NR', 'غير مسجل');
+
+var ACS_SECTIONS = [
+  { id: 'id',   en: 'Admission', ar: 'الدخول' },
+  { id: 'demo', en: 'Demographics', ar: 'البيانات الديموغرافية' },
+  { id: 'time', en: 'Timing & presentation', ar: 'التوقيت والتقديم' },
+  { id: 'risk', en: 'Risk factors', ar: 'عوامل الخطورة' },
+  { id: 'dx',   en: 'Diagnosis & severity', ar: 'التشخيص والشدة' },
+  { id: 'tx',   en: 'Treatment', ar: 'العلاج' },
+  { id: 'out',  en: 'In-hospital outcomes', ar: 'النتائج داخل المشفى' }
+];
+
+var ACS_GOVERNORATES = ['Damascus', 'Rural Damascus', 'Homs', 'Hama', 'Aleppo', 'Idlib', 'Latakia', 'Tartus',
+  'Deir ez-Zor', 'Raqqa', 'Hasakah', 'Daraa', 'Suwayda', 'Quneitra'];
+var ACS_GOV_AR = { 'Damascus': 'دمشق', 'Rural Damascus': 'ريف دمشق', 'Homs': 'حمص', 'Hama': 'حماة', 'Aleppo': 'حلب',
+  'Idlib': 'إدلب', 'Latakia': 'اللاذقية', 'Tartus': 'طرطوس', 'Deir ez-Zor': 'دير الزور', 'Raqqa': 'الرقة',
+  'Hasakah': 'الحسكة', 'Daraa': 'درعا', 'Suwayda': 'السويداء', 'Quneitra': 'القنيطرة' };
+
+var ACS_EXCL_REASONS = [
+  { v: 'Age <18', ar: 'العمر أقل من ١٨ سنة' },
+  { v: 'ACS not confirmed per criteria', ar: 'تشخيص ACS غير مؤكد وفق المعايير' },
+  { v: 'Admitted outside study period', ar: 'دخول خارج فترة الدراسة' },
+  { v: 'Transferred from another hospital', ar: 'محوَّل من مشفى آخر' },
+  { v: 'End-stage renal disease on dialysis', ar: 'فشل كلوي نهائي على الغسيل' },
+  { v: 'Active malignancy', ar: 'ورم خبيث فعّال' },
+  { v: 'Pre-existing NYHA class IV heart failure', ar: 'قصور قلب NYHA IV سابق' },
+  { v: 'Silent MI found incidentally', ar: 'احتشاء صامت مكتشف بالصدفة' },
+  { v: 'Incomplete record (ACS type / timing / outcomes missing)', ar: 'سجل ناقص (نوع ACS أو التوقيت أو النتائج)' },
+  { v: 'Duplicate (chart already entered)', ar: 'تكرار (الإضبارة مُدخلة سابقاً)' },
+  { v: 'Other', ar: 'سبب آخر' }
+];
+
+function _f(k, s, t, en, ar, x) {
+  var f = { k: k, s: s, t: t, en: en, ar: ar };
+  if (x) { for (var p in x) { if (Object.prototype.hasOwnProperty.call(x, p)) f[p] = x[p]; } }
+  return f;
+}
+function _rule(en, ar) { return { en: en, ar: ar }; }
+
+var _DOCQ = [_o('Exact time documented', 'الوقت موثق بدقة'), _o('Approximate time documented', 'الوقت موثق تقريباً'),
+  _o('Patient unable to specify', 'المريض غير قادر على التحديد'), _NR];
+var _TIMECAT = [_o('<3h', '<3 س'), _o('3-6h', '3-6 س'), _o('6-12h', '6-12 س'), _o('12-24h', '12-24 س'), _o('>24h', '>24 س')];
+var _TOD = [_o('Daytime (8AM-12AM)', 'نهار (8ص-12م)'), _o('Nighttime (12AM-8AM)', 'ليل (12م-8ص)')];
+
+var ACS_FIELDS = [
+  /* ---------- Admission ---------- */
+  _f('admission_date', 'id', 'date', 'Admission date', 'تاريخ الدخول'),
+  _f('discharge_date', 'id', 'date', 'Discharge / death date', 'تاريخ الخروج أو الوفاة'),
+  _f('admission_year', 'id', 'calc', 'Year of admission', 'سنة الدخول',
+    { rule: _rule('Year part of the admission date.', 'سنة تاريخ الدخول.') }),
+  _f('los_days', 'id', 'calc', 'Length of stay (days)', 'مدة الإقامة (أيام)',
+    { rule: _rule('Discharge/death date minus admission date, in calendar days (same day = 0).', 'تاريخ الخروج ناقص تاريخ الدخول بالأيام (نفس اليوم = 0).') }),
+
+  /* ---------- Demographics ---------- */
+  _f('age_years', 'demo', 'int', 'Age (years)', 'العمر (سنة)', { min: 18, max: 110, unit: 'yrs', hint: { en: 'Adults ≥18 only.', ar: 'البالغون ≥١٨ سنة فقط.' }, irr: true }),
+  _f('sex', 'demo', 'sel', 'Sex', 'الجنس', { opts: [_o('Male', 'ذكر'), _o('Female', 'أنثى')] }),
+  _f('residence', 'demo', 'sel', 'Residence', 'منطقة السكن', { opts: [_o('Urban', 'حضري'), _o('Rural', 'ريفي'), _NR], hint: { en: 'From the address in the medical record.', ar: 'من العنوان المسجل في الملف.' } }),
+  _f('governorate', 'demo', 'sel', 'Governorate of residence', 'محافظة السكن',
+    { opts: ACS_GOVERNORATES.map(function (g) { return _o(g, ACS_GOV_AR[g]); }).concat([_o('Outside Syria', 'خارج سوريا'), _NR]) }),
+  _f('education', 'demo', 'sel', 'Education', 'المستوى التعليمي',
+    { opts: [_o('Illiterate', 'أمي'), _o('Primary', 'ابتدائي'), _o('Secondary', 'ثانوي'), _o('University', 'جامعي'), _NR] }),
+  _f('education_3', 'demo', 'calc', 'Education (3 levels)', 'التعليم (٣ مستويات)',
+    { opts: [_o('Below secondary', 'أقل من ثانوي'), _o('Secondary', 'ثانوي'), _o('University+', 'جامعي فأعلى'), _NR],
+      rule: _rule('Illiterate/Primary → Below secondary; Secondary; University → University+. Used in Regression 1 (protocol v5, collapsed categories).', 'أمي/ابتدائي ← أقل من ثانوي؛ ثانوي؛ جامعي ← جامعي فأعلى. يُستخدم في الانحدار ١ (دمج الفئات حسب البروتوكول).') }),
+  _f('employment', 'demo', 'sel', 'Employment', 'الوظيفة', { opts: [_o('Employed', 'موظف / يعمل'), _o('Unemployed', 'عاطل عن العمل'), _o('Retired', 'متقاعد'), _NR] }),
+
+  /* ---------- Timing & presentation ---------- */
+  _f('doc_quality', 'time', 'sel', 'Documentation quality of symptom-onset time', 'جودة توثيق وقت بدء الأعراض', { opts: _DOCQ, irr: true,
+    hint: { en: 'Choose first. If the onset time is not documented, the onset field is skipped and S-to-D stays empty.', ar: 'اختر أولاً. إذا لم يكن وقت البدء موثقاً يُتخطى حقل البدء ويبقى S-to-D فارغاً.' } }),
+  _f('onset_dt', 'time', 'dt', 'Symptom onset (date & time)', 'بدء الأعراض (التاريخ والوقت)', { irr: true,
+    showIf: [{ k: 'doc_quality', in: ['Exact time documented', 'Approximate time documented'] }] }),
+  _f('door_dt', 'time', 'dt', 'ED arrival / door (date & time)', 'الوصول للإسعاف (التاريخ والوقت)', { irr: true }),
+  _f('stod_minutes', 'time', 'calc', 'S-to-D time (minutes)', 'زمن S-to-D (دقائق)',
+    { rule: _rule('Door time minus onset time, in whole minutes. Never rounded to hours.', 'وقت الوصول ناقص وقت البدء بالدقائق، دون تقريب إلى ساعات.') }),
+  _f('stod_hours', 'time', 'calc', 'S-to-D time (hours) — continuous', 'زمن S-to-D (ساعات) — متصل',
+    { unit: 'h', rule: _rule('Minutes ÷ 60 (4 decimals). Primary continuous exposure.', 'الدقائق ÷ 60 (٤ منازل عشرية). المتغير المستقل المتصل الأساسي.') }),
+  _f('delayed_12h', 'time', 'calc', 'Delayed >12 h', 'تأخر >12 ساعة',
+    { opts: _YN, rule: _rule('Yes if S-to-D is strictly more than 12 h (720 min). Exactly 12 h = No.', 'نعم إذا زاد S-to-D عن 12 ساعة (720 دقيقة). 12 ساعة بالضبط = لا.') }),
+  _f('time_category', 'time', 'calc', 'Time category', 'فئة الزمن',
+    { opts: _TIMECAT, rule: _rule('<3h; 3-6h (from 3h); 6-12h (from 6h up to and including 12h); 12-24h (up to and including 24h); >24h.', '<3؛ 3-6 (من 3)؛ 6-12 (من 6 حتى 12 شاملة)؛ 12-24 (حتى 24 شاملة)؛ >24.') }),
+  _f('onset_tod', 'time', 'calc', 'Onset time of day', 'وقت بدء الأعراض (نهار/ليل)',
+    { opts: _TOD, rule: _rule('Nighttime = onset from 00:00 to 07:59; Daytime = 08:00 to 23:59.', 'ليل = البدء من 00:00 حتى 07:59؛ نهار = من 08:00 حتى 23:59.') }),
+  _f('onset_day', 'time', 'calc', 'Onset day type', 'نوع يوم البدء',
+    { opts: [_o('Weekday', 'يوم عمل'), _o('Weekend', 'عطلة')], rule: _rule('Weekend = Friday or Saturday (Syrian weekend), by onset date.', 'عطلة = الجمعة أو السبت (عطلة نهاية الأسبوع في سوريا) حسب تاريخ البدء.') }),
+  _f('analysis_set', 'time', 'calc', 'In primary delay analysis', 'ضمن تحليل التأخر الأساسي',
+    { opts: _YN, rule: _rule('Yes only if onset time is documented (exact/approximate) and S-to-D could be calculated.', 'نعم فقط إذا كان وقت البدء موثقاً (دقيق/تقريبي) وأمكن حساب S-to-D.') }),
+  _f('chief_complaint', 'time', 'sel', 'Chief complaint', 'الشكوى الرئيسية',
+    { opts: [_o('Typical chest pain', 'ألم صدري نموذجي'), _o('Atypical chest pain', 'ألم صدري غير نموذجي'), _o('Dyspnea', 'زلة تنفسية'),
+      _o('Epigastric / abdominal pain', 'ألم شرسوفي / بطني'), _o('Syncope', 'غشي'), _o('Cardiac arrest', 'ايقاف قلبي'), _o('Other', 'أخرى'), _NR] }),
+  _f('referral_source', 'time', 'sel', 'Referral source', 'مصدر الإحالة', { irr: true,
+    opts: [_o('Direct (self/family)', 'مباشر (المريض/الأهل)'), _o('Via Primary HC', 'عبر مركز صحي أولي'), _o('Via District Hospital', 'عبر مشفى منطقة'), _o('EMS', 'إسعاف')],
+    hint: { en: 'Transferred patients are excluded at screening.', ar: 'المحوَّلون من مشفى آخر يُستبعدون عند الفرز.' } }),
+  _f('referral_2', 'time', 'calc', 'Referral (2 levels)', 'الإحالة (مستويان)',
+    { opts: [_o('Direct', 'مباشر'), _o('Via referral', 'عبر إحالة')], rule: _rule('Direct (self/family) → Direct; any other source → Via referral (protocol v5).', 'مباشر ← مباشر؛ أي مصدر آخر ← عبر إحالة (حسب البروتوكول).') }),
+  _f('transport_mode', 'time', 'sel', 'Transport mode', 'وسيلة النقل', { opts: [_o('Private vehicle', 'سيارة خاصة'), _o('Ambulance', 'إسعاف'), _o('Public transport', 'نقل عام'), _NR] }),
+  _f('year_2024', 'id', 'calc', 'Admission period (before/after 2024)', 'فترة الدخول (قبل/بعد 2024)',
+    { opts: [_o('Before 2024', 'قبل 2024'), _o('2024 or later', '2024 فما بعد')], rule: _rule('Binary replacement of year categories (protocol v5): ≤2023 vs ≥2024. If nearly all records are 2025–2026 this variable has no variation — drop it from the model.', 'تحويل ثنائي لسنة الدخول (حسب البروتوكول): ≤2023 مقابل ≥2024. إذا كانت معظم السجلات 2025–2026 فلا يوجد تباين — يُحذف من النموذج.') }),
+
+  /* ---------- Risk factors ---------- */
+  _f('htn', 'risk', 'sel', 'Hypertension (HTN)', 'فرط توتر شرياني', { opts: _YNNR, irr: true }),
+  _f('dm', 'risk', 'sel', 'Diabetes mellitus (DM)', 'داء سكري', { opts: _YNNR, irr: true }),
+  _f('dyslipidemia', 'risk', 'sel', 'Dyslipidemia', 'اضطراب شحوم الدم', { opts: _YNNR, irr: true }),
+  _f('smoking', 'risk', 'sel', 'Smoking', 'التدخين', { opts: [_o('Never', 'لا'), _o('Ex', 'سابقاً'), _o('Current', 'حالياً'), _NR], codes: { 'Never': 0, 'Ex': 1, 'Current': 2 } }),
+  _f('family_hx_cad', 'risk', 'sel', 'Family history of CAD', 'قصة عائلية لداء الشريان التاجي', { opts: _YNNR }),
+  _f('obesity', 'risk', 'sel', 'Obesity', 'بدانة', { opts: _YNNR }),
+  _f('prior_cad_mi', 'risk', 'sel', 'Prior CAD / MI', 'داء شريان تاجي / احتشاء سابق', { opts: _YNNR }),
+  _f('prior_pci_cabg', 'risk', 'sel', 'Prior PCI / CABG', 'قثطرة / مجازات سابقة', { opts: [_o('No', 'لا'), _o('PCI', 'قثطرة'), _o('CABG', 'مجازات'), _NR], codes: { 'No': 0, 'PCI': 1, 'CABG': 2 } }),
+  _f('ckd', 'risk', 'sel', 'Chronic kidney disease (not on dialysis)', 'قصور كلوي مزمن (دون غسيل)', { opts: _YNNR }),
+  _f('prior_hf', 'risk', 'sel', 'Prior heart failure', 'قصور قلب سابق', { opts: _YNNR }),
+
+  /* ---------- Diagnosis & severity ---------- */
+  _f('acs_type', 'dx', 'sel', 'ACS type', 'نوع ACS', { irr: true,
+    opts: [_o('STEMI', 'STEMI'), _o('NSTEMI', 'NSTEMI'), _o('Unstable Angina', 'ذبحة غير مستقرة')],
+    hint: { en: 'STEMI: ST elevation + troponin+. NSTEMI: no ST elevation + troponin+. UA: troponin−.', ar: 'STEMI: ارتفاع ST + تروبونين إيجابي. NSTEMI: دون ارتفاع ST + تروبونين إيجابي. UA: تروبونين سلبي.' } }),
+  _f('killip_class', 'dx', 'sel', 'Killip class (at presentation)', 'تصنيف Killip (عند التقديم)', { irr: true,
+    opts: [_o('I', 'I'), _o('II', 'II'), _o('III', 'III'), _o('IV', 'IV'), _NR],
+    hint: { en: 'I none · II rales/S3 · III pulmonary edema · IV cardiogenic shock', ar: 'I لا قصور · II خراخر/S3 · III وذمة رئة · IV صدمة قلبية' } }),
+  _f('hr_bpm', 'dx', 'int', 'Heart rate (bpm)', 'معدل النبض (نبضة/د)', { min: 20, max: 300, nr: true, unit: 'bpm' }),
+  _f('sbp_mmhg', 'dx', 'int', 'Systolic BP (mmHg)', 'الضغط الانقباضي (ملم زئبق)', { min: 40, max: 300, nr: true, unit: 'mmHg' }),
+  _f('dbp_mmhg', 'dx', 'int', 'Diastolic BP (mmHg)', 'الضغط الانبساطي (ملم زئبق)', { min: 20, max: 200, nr: true, unit: 'mmHg' }),
+  _f('ecg', 'dx', 'sel', 'ECG', 'تخطيط القلب',
+    { opts: [_o('ST elevation', 'ارتفاع ST'), _o('New LBBB', 'LBBB جديد'), _o('ST depression / T inversion', 'هبوط ST / انقلاب T'), _o('Normal / non-diagnostic', 'طبيعي / غير تشخيصي'), _o('Other', 'أخرى'), _NR] }),
+  _f('troponin_status', 'dx', 'sel', 'Troponin result', 'نتيجة التروبونين', { opts: [_o('Positive', 'إيجابي'), _o('Negative', 'سلبي'), _NR],
+    hint: { en: 'As interpreted in the chart (above the lab’s reference limit).', ar: 'كما هو مفسَّر في الملف (فوق الحد المرجعي للمخبر).' } }),
+  _f('infarct_territory', 'dx', 'sel', 'Infarct territory', 'منطقة الاحتشاء',
+    { showIf: [{ k: 'acs_type', in: ['STEMI', 'NSTEMI'] }],
+      opts: [_o('Anterior', 'أمامي'), _o('Inferior', 'سفلي'), _o('Lateral', 'جانبي'), _o('Posterior', 'خلفي'), _o('Diffuse', 'منتشر'), _NR] }),
+  _f('peak_troponin_ng_l', 'dx', 'num', 'Peak troponin (ng/L)', 'ذروة التروبونين (ng/L)', { min: 0, max: 1000000, nr: true, unit: 'ng/L',
+    hint: { en: 'If reported in ng/mL multiply by 1000.', ar: 'إذا كان بـ ng/mL اضرب بـ 1000.' } }),
+  _f('peak_ckmb_u_l', 'dx', 'num', 'Peak CK-MB (U/L)', 'ذروة CK-MB (U/L)', { min: 0, max: 10000, nr: true, unit: 'U/L' }),
+
+  /* ---------- Treatment ---------- */
+  _f('reperfusion', 'tx', 'sel', 'Reperfusion strategy', 'استراتيجية إعادة التروية',
+    { opts: [_o('Primary PCI', 'قثطرة أولية'), _o('Rescue PCI', 'قثطرة إنقاذية'), _o('Thrombolysis', 'حلّ خثرة'), _o('Conservative', 'محافظ'), _o('None', 'لا شيء'), _NR] }),
+  _f('d2b_min', 'tx', 'int', 'Door-to-balloon (min)', 'من الوصول حتى البالون (دقيقة)', { min: 0, max: 1440, nr: true, unit: 'min',
+    showIf: [{ k: 'reperfusion', in: ['Primary PCI', 'Rescue PCI'] }] }),
+  _f('d2n_min', 'tx', 'int', 'Door-to-needle (min)', 'من الوصول حتى الإبرة (دقيقة)', { min: 0, max: 1440, nr: true, unit: 'min',
+    showIf: [{ k: 'reperfusion', in: ['Thrombolysis'] }] }),
+  _f('aspirin', 'tx', 'sel', 'Aspirin', 'أسبرين', { opts: _YNNR }),
+  _f('p2y12', 'tx', 'sel', 'P2Y12 inhibitor', 'مثبط P2Y12', { opts: _YNNR }),
+  _f('anticoag', 'tx', 'sel', 'Anticoagulation', 'مضاد تخثر', { opts: [_o('UFH', 'هيبارين غير مجزّأ'), _o('LMWH', 'هيبارين منخفض الوزن'), _o('No', 'لا'), _NR] }),
+  _f('beta_blocker', 'tx', 'sel', 'Beta-blocker', 'حاصر بيتا', { opts: _YNNR }),
+  _f('acei_arb', 'tx', 'sel', 'ACEi / ARB', 'ACEi / ARB', { opts: _YNNR }),
+  _f('statin', 'tx', 'sel', 'Statin', 'ستاتين', { opts: _YNNR }),
+
+  /* ---------- Outcomes ---------- */
+  _f('echo_done', 'out', 'sel', 'Echocardiography done?', 'هل أُجري إيكو؟', { opts: _YN, irr: true }),
+  _f('lvef_pct', 'out', 'num', 'LVEF (%)', 'الجزء المقذوف LVEF (%)', { min: 5, max: 85, nr: true, unit: '%', irr: true,
+    showIf: [{ k: 'echo_done', in: ['Yes'] }] }),
+  _f('lvef_category', 'out', 'calc', 'LVEF category', 'فئة LVEF',
+    { opts: [_o('>=50%', '≥50%'), _o('40-49%', '40-49%'), _o('<40%', '<40%'), _NR],
+      rule: _rule('≥50% preserved; 40–49% mildly reduced; <40% reduced. NR if echo not done or LVEF not recorded.', '≥50% محفوظة؛ 40–49% منخفضة قليلاً؛ <40% منخفضة. NR إذا لم يُجرَ إيكو أو لم تُسجل LVEF.') }),
+  _f('heart_failure', 'out', 'sel', 'New-onset heart failure', 'قصور قلب حديث', { opts: _YN }),
+  _f('cardiogenic_shock', 'out', 'sel', 'Cardiogenic shock', 'صدمة قلبية', { opts: _YN, irr: true }),
+  _f('vt_vf', 'out', 'sel', 'Sustained VT / VF', 'تسرع بطيني مستمر / رجفان بطيني', { opts: _YN }),
+  _f('heart_block', 'out', 'sel', 'High-grade heart block', 'حصار قلبي عالي الدرجة', { opts: _YN }),
+  _f('mech_complication', 'out', 'sel', 'Mechanical complication', 'اختلاط ميكانيكي',
+    { opts: [_o('No', 'لا'), _o('VSD', 'VSD'), _o('MR', 'MR'), _o('Free wall rupture', 'تمزق الجدار الحر')], codes: { 'No': 0, 'VSD': 1, 'MR': 2, 'Free wall rupture': 3 } }),
+  _f('stroke_tia', 'out', 'sel', 'Stroke / TIA', 'سكتة / TIA', { opts: _YN }),
+  _f('aki', 'out', 'sel', 'Acute kidney injury', 'أذية كلوية حادة', { opts: _YN }),
+  _f('icu_admission', 'out', 'sel', 'ICU admission', 'دخول عناية مركزة', { opts: _YN, irr: true }),
+  _f('iabp_mcs', 'out', 'sel', 'IABP / mechanical support', 'بالون عكسي / دعم ميكانيكي', { opts: _YN }),
+  _f('in_hospital_death', 'out', 'sel', 'In-hospital death', 'وفاة داخل المشفى', { opts: _YN, irr: true }),
+  _f('cause_of_death', 'out', 'sel', 'Cause of death', 'سبب الوفاة', { showIf: [{ k: 'in_hospital_death', in: ['Yes'] }],
+    opts: [_o('Cardiac', 'قلبي'), _o('Non-cardiac', 'غير قلبي'), _o('Unknown', 'غير معروف')] }),
+  _f('mahce', 'out', 'calc', 'MAHCE (primary composite)', 'MAHCE (النقطة المركبة الأساسية)',
+    { opts: _YN, rule: _rule('Yes if ANY: in-hospital death, cardiogenic shock, sustained VT/VF, new heart failure, ICU admission, or LVEF <40%.', 'نعم إذا حدث أي مما يلي: وفاة، صدمة قلبية، VT/VF مستمر، قصور قلب حديث، عناية مركزة، أو LVEF <40%.') }),
+  _f('mahce_excl_lvef', 'out', 'calc', 'MAHCE excluding LVEF (sensitivity)', 'MAHCE بدون LVEF (تحليل حساسية)',
+    { opts: _YN, rule: _rule('Same as MAHCE but only the 5 clinical components. Use as sensitivity analysis if LVEF missing >20%.', 'مثل MAHCE لكن بالمكونات السريرية الخمسة فقط. يُستخدم كتحليل حساسية إذا زادت نسبة فقدان LVEF عن 20%.') }),
+
+  /* ---------- Completeness (calculated) ---------- */
+  _f('nr_count', 'out', 'calc', 'Number of NR fields', 'عدد الحقول غير المسجلة (NR)',
+    { rule: _rule('Count of fields recorded as NR (onset time is counted when its documentation is missing).', 'عدد الحقول المسجلة NR (يُحسب وقت البدء إذا لم يكن موثقاً).') }),
+  _f('nr_fields', 'out', 'calc', 'Fields recorded as NR', 'الحقول غير المسجلة',
+    { rule: _rule('Variable names recorded as NR, separated by semicolons.', 'أسماء المتغيرات المسجلة NR مفصولة بفاصلة منقوطة.') }),
+  _f('completeness', 'out', 'calc', 'Record completeness', 'اكتمال السجل',
+    { opts: [_o('Complete', 'مكتمل'), _o('Incomplete', 'غير مكتمل')],
+      rule: _rule('Incomplete if ANY field is NR; Complete if none. Values missing from the chart are never filled in — they are recorded as NR and the record is classified automatically.', 'غير مكتمل إذا كان أي حقل NR؛ مكتمل إذا لا يوجد. القيم غير الموجودة بالإضبارة لا تُعبَّأ أبداً — تُسجَّل NR ويُصنَّف السجل تلقائياً.') }),
+  _f('model1_complete', 'out', 'calc', 'Complete for Regression 1', 'مكتمل للانحدار ١ (Complete-case)',
+    { opts: _YN, rule: _rule('Yes if age, sex, residence, education, employment, DM, HTN, dyslipidemia, ACS type and referral source are all recorded AND onset time is documented. Complete-case flag for Regression 1 (delay predictors).', 'نعم إذا سُجّل العمر والجنس والسكن والتعليم والوظيفة وDM وHTN واضطراب الشحوم ونوع ACS ومصدر الإحالة وكان وقت البدء موثقاً. علامة التحليل الكامل (complete-case) للانحدار ١.') }),
+  _f('model2_complete', 'out', 'calc', 'Complete for Regression 2', 'مكتمل للانحدار ٢ (Complete-case)',
+    { opts: _YN, rule: _rule('Yes if age, ACS type, Killip class and DM are recorded AND S-to-D is calculable AND MAHCE is determined. Complete-case flag for Regression 2 (delay → MAHCE).', 'نعم إذا سُجّل العمر ونوع ACS وKillip وDM وأمكن حساب S-to-D وتحدد MAHCE. علامة التحليل الكامل (complete-case) للانحدار ٢.') }),
+
+  /* ---------- Notes ---------- */
+  _f('notes', 'out', 'text', 'Notes (no names, phone numbers or ID numbers)', 'ملاحظات (بدون أسماء أو أرقام هواتف أو أرقام هوية)', { optional: true })
+];
+
+var ACS_FIELD_MAP = {};
+(function () { for (var i = 0; i < ACS_FIELDS.length; i++) ACS_FIELD_MAP[ACS_FIELDS[i].k] = ACS_FIELDS[i]; })();
+
+/* ----------------------------- helpers ----------------------------- */
+function acsBlank(v) { return v === undefined || v === null || v === ''; }
+function acsOptVals(f) { var a = []; if (f.opts) for (var i = 0; i < f.opts.length; i++) a.push(f.opts[i].v); return a; }
+function acsAllowsNR(f) { return !!f.nr || acsOptVals(f).indexOf('NR') >= 0; }
+function acsVisible(f, vals) {
+  if (!f.showIf) return true;
+  for (var i = 0; i < f.showIf.length; i++) {
+    var c = f.showIf[i];
+    if (c.in.indexOf(vals[c.k]) < 0) return false;
+  }
+  return true;
+}
+function acsParseDate(s) {
+  var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(s === undefined || s === null ? '' : s));
+  if (!m) return null;
+  var y = +m[1], mo = +m[2], d = +m[3];
+  var t = Date.UTC(y, mo - 1, d);
+  var dt = new Date(t);
+  if (dt.getUTCFullYear() !== y || dt.getUTCMonth() !== mo - 1 || dt.getUTCDate() !== d) return null;
+  return t;
+}
+function acsParseDT(s) {
+  var m = /^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})(?::\d{2})?$/.exec(String(s === undefined || s === null ? '' : s));
+  if (!m) return null;
+  var y = +m[1], mo = +m[2], d = +m[3], h = +m[4], mi = +m[5];
+  if (h > 23 || mi > 59) return null;
+  var t = Date.UTC(y, mo - 1, d, h, mi);
+  var dt = new Date(t);
+  if (dt.getUTCFullYear() !== y || dt.getUTCMonth() !== mo - 1 || dt.getUTCDate() !== d) return null;
+  return t;
+}
+function acsNormDT(s) {
+  var t = acsParseDT(s);
+  if (t === null) return null;
+  var d = new Date(t);
+  function p(n) { return (n < 10 ? '0' : '') + n; }
+  return d.getUTCFullYear() + '-' + p(d.getUTCMonth() + 1) + '-' + p(d.getUTCDate()) + ' ' + p(d.getUTCHours()) + ':' + p(d.getUTCMinutes());
+}
+function acsNum(v) {
+  if (acsBlank(v) || v === 'NR' || v === 'NA') return null;
+  var n = Number(v);
+  return isFinite(n) ? n : null;
+}
+
+/* ------------------- calculated variables (authoritative) ------------------- */
+function acsCompute(v) {
+  var o = {};
+  var ad = acsParseDate(v.admission_date), dd = acsParseDate(v.discharge_date);
+  o.admission_year = ad !== null ? new Date(ad).getUTCFullYear() : '';
+  o.year_2024 = ad !== null ? (new Date(ad).getUTCFullYear() < 2024 ? 'Before 2024' : '2024 or later') : '';
+  o.los_days = (ad !== null && dd !== null) ? Math.round((dd - ad) / 86400000) : '';
+
+  var ed = v.education;
+  o.education_3 = acsBlank(ed) ? '' : (ed === 'Illiterate' || ed === 'Primary') ? 'Below secondary' : ed === 'Secondary' ? 'Secondary' : ed === 'University' ? 'University+' : 'NR';
+
+  var dq = v.doc_quality;
+  var mins = null;
+  if (dq === 'Patient unable to specify' || dq === 'NR') {
+    o.stod_minutes = 'NA'; o.stod_hours = 'NA'; o.delayed_12h = 'NA'; o.time_category = 'NA';
+    o.onset_tod = 'NA'; o.onset_day = 'NA'; o.analysis_set = 'No';
+  } else {
+    var on = acsParseDT(v.onset_dt), dr = acsParseDT(v.door_dt);
+    if (on !== null && dr !== null && dr >= on) mins = Math.round((dr - on) / 60000);
+    if (mins === null) {
+      o.stod_minutes = ''; o.stod_hours = ''; o.delayed_12h = ''; o.time_category = ''; o.analysis_set = '';
+    } else {
+      var h = mins / 60;
+      o.stod_minutes = mins;
+      o.stod_hours = Math.round(h * 10000) / 10000;
+      o.delayed_12h = mins > 720 ? 'Yes' : 'No';
+      o.time_category = h < 3 ? '<3h' : h < 6 ? '3-6h' : h <= 12 ? '6-12h' : h <= 24 ? '12-24h' : '>24h';
+      o.analysis_set = (dq === 'Exact time documented' || dq === 'Approximate time documented') ? 'Yes' : '';
+    }
+    if (on !== null) {
+      var od = new Date(on);
+      o.onset_tod = od.getUTCHours() < 8 ? 'Nighttime (12AM-8AM)' : 'Daytime (8AM-12AM)';
+      var dow = od.getUTCDay();
+      o.onset_day = (dow === 5 || dow === 6) ? 'Weekend' : 'Weekday';
+    } else { o.onset_tod = ''; o.onset_day = ''; }
+  }
+
+  var rs = v.referral_source;
+  o.referral_2 = acsBlank(rs) ? '' : rs === 'Direct (self/family)' ? 'Direct' : 'Via referral';
+
+  var lv = '';
+  if (v.echo_done === 'No') lv = 'NR';
+  else if (v.echo_done === 'Yes') {
+    var lp = acsNum(v.lvef_pct);
+    if (v.lvef_pct === 'NR') lv = 'NR';
+    else if (lp !== null) lv = lp >= 50 ? '>=50%' : lp >= 40 ? '40-49%' : '<40%';
+  }
+  o.lvef_category = lv;
+
+  var comps = [v.in_hospital_death, v.cardiogenic_shock, v.vt_vf, v.heart_failure, v.icu_admission];
+  var anyYes = comps.indexOf('Yes') >= 0, anyBlank = false;
+  for (var i = 0; i < comps.length; i++) if (acsBlank(comps[i])) anyBlank = true;
+  o.mahce_excl_lvef = anyYes ? 'Yes' : (anyBlank ? '' : 'No');
+  if (anyYes || lv === '<40%') o.mahce = 'Yes';
+  else o.mahce = (anyBlank || lv === '') ? '' : 'No';
+  var nrl = [], pending = false, i2;
+  for (i2 = 0; i2 < ACS_FIELDS.length; i2++) {
+    var ff = ACS_FIELDS[i2];
+    if (ff.t === 'calc' || ff.t === 'text') continue;
+    var xv = v[ff.k];
+    if (xv === 'NR') nrl.push(ff.k); else if (xv === '' || xv === undefined || xv === null) pending = true;
+  }
+  if (dq === 'Patient unable to specify') nrl.push('onset_dt');
+  o.nr_count = nrl.length;
+  o.nr_fields = nrl.join(';');
+  o.completeness = pending ? '' : (nrl.length ? 'Incomplete' : 'Complete');
+  var m1 = ['age_years', 'sex', 'residence', 'education', 'employment', 'dm', 'htn', 'dyslipidemia', 'acs_type', 'referral_source'], m1no = false, m1p = false;
+  for (i2 = 0; i2 < m1.length; i2++) { var mv = v[m1[i2]]; if (mv === 'NR') m1no = true; else if (mv === '' || mv === undefined) m1p = true; }
+  if (o.analysis_set === 'No') m1no = true; else if (o.analysis_set === '') m1p = true;
+  o.model1_complete = m1no ? 'No' : (m1p ? '' : 'Yes');
+  var m2 = ['age_years', 'acs_type', 'killip_class', 'dm'], m2no = false, m2p = false;
+  for (i2 = 0; i2 < m2.length; i2++) { var qv = v[m2[i2]]; if (qv === 'NR') m2no = true; else if (qv === '' || qv === undefined) m2p = true; }
+  if (o.analysis_set === 'No') m2no = true; else if (o.analysis_set === '') m2p = true;
+  if (o.mahce === '') m2p = true;
+  o.model2_complete = m2no ? 'No' : (m2p ? '' : 'Yes');
+  return o;
+}
+
+/* Normalise raw form values: hidden fields → 'NA', calculated fields filled in. */
+function acsApply(raw) {
+  var v = {}, i, f;
+  for (i = 0; i < ACS_FIELDS.length; i++) {
+    f = ACS_FIELDS[i];
+    if (f.t === 'calc') continue;
+    var x = raw[f.k];
+    v[f.k] = acsBlank(x) ? '' : String(x).trim();
+  }
+  for (i = 0; i < ACS_FIELDS.length; i++) {
+    f = ACS_FIELDS[i];
+    if (f.t === 'calc') continue;
+    if (!acsVisible(f, v)) v[f.k] = 'NA';
+  }
+  if (v.onset_dt && v.onset_dt !== 'NA') { var n = acsNormDT(v.onset_dt); if (n) v.onset_dt = n; }
+  if (v.door_dt && v.door_dt !== 'NA') { var n2 = acsNormDT(v.door_dt); if (n2) v.door_dt = n2; }
+  var calc = acsCompute(v);
+  for (var k in calc) v[k] = calc[k];
+  return v;
+}
+
+/* ------------------------------ validation ------------------------------ */
+var ACS_PII_RE = /(\d{8,})|([\u0660-\u0669\u06F0-\u06F9]{8,})|(@[A-Za-z0-9_.-]+\.[A-Za-z]{2,})|(https?:\/\/)/;
+
+function acsValidate(raw, opts) {
+  opts = opts || {};
+  var mode = opts.mode || 'submit';
+  var vals = acsApply(raw);
+  var errors = [], warnings = [];
+  function E(k, en, ar) { errors.push({ k: k, en: en, ar: ar }); }
+  function W(c, k, en, ar) { warnings.push({ c: c, k: k, en: en, ar: ar }); }
+  var i, f;
+
+  for (i = 0; i < ACS_FIELDS.length; i++) {
+    f = ACS_FIELDS[i];
+    if (f.t === 'calc') continue;
+    if (opts.only && opts.only.indexOf(f.k) < 0) continue;
+    if (!acsVisible(f, vals)) continue;
+    var x = raw[f.k];
+    var blank = acsBlank(x) || String(x).trim() === '';
+    if (blank) {
+      if (mode === 'submit' && !f.optional) E(f.k, 'Required — enter the value or choose NR.', 'مطلوب — أدخل القيمة أو اختر NR.');
+      continue;
+    }
+    var s = String(x).trim();
+    if (f.t === 'int' || f.t === 'num') {
+      if (s === 'NR') { if (!f.nr) E(f.k, 'NR is not allowed here.', 'غير مسموح باختيار NR هنا.'); continue; }
+      var okFmt = f.t === 'int' ? /^\d+$/.test(s) : /^\d+(\.\d+)?$/.test(s);
+      if (!okFmt) { E(f.k, 'Use English digits 0-9 only' + (f.t === 'num' ? ' (decimal point allowed).' : '.'), 'استخدم الأرقام الإنكليزية 0-9 فقط' + (f.t === 'num' ? ' (النقطة العشرية مسموحة).' : '.')); continue; }
+      var n = Number(s);
+      if ((f.min !== undefined && n < f.min) || (f.max !== undefined && n > f.max)) {
+        E(f.k, 'Value must be between ' + f.min + ' and ' + f.max + (f.k === 'age_years' ? ' (inclusion: adults ≥18).' : '.'), 'القيمة يجب أن تكون بين ' + f.min + ' و ' + f.max + (f.k === 'age_years' ? ' (معيار الشمول: بالغون ≥١٨).' : '.'));
+      }
+    } else if (f.t === 'date') {
+      if (acsParseDate(s) === null) E(f.k, 'Invalid date.', 'تاريخ غير صالح.');
+    } else if (f.t === 'dt') {
+      if (acsParseDT(s) === null) E(f.k, 'Invalid date/time.', 'تاريخ/وقت غير صالح.');
+    } else if (f.t === 'sel') {
+      if (acsOptVals(f).indexOf(s) < 0) E(f.k, 'Choose one of the listed options.', 'اختر أحد الخيارات المعروضة.');
+    } else if (f.t === 'text') {
+      if (s.length > 500) E(f.k, 'Maximum 500 characters.', 'الحد الأقصى 500 حرف.');
+      if (ACS_PII_RE.test(s)) E(f.k, 'Looks like an identifier (phone / ID number / email / link). Remove it.', 'يبدو كمعرّف (هاتف / رقم هوية / بريد / رابط). احذفه.');
+    }
+  }
+
+  var ad = acsParseDate(vals.admission_date), dd = acsParseDate(vals.discharge_date);
+  if (opts.year && ad !== null && new Date(ad).getUTCFullYear() !== Number(opts.year)) {
+    E('admission_date', 'Admission date must fall in the selected year (' + opts.year + ').', 'تاريخ الدخول يجب أن يقع ضمن السنة المختارة (' + opts.year + ').');
+  }
+  if (ad !== null && dd !== null && dd < ad) E('discharge_date', 'Discharge/death date is before the admission date.', 'تاريخ الخروج/الوفاة قبل تاريخ الدخول.');
+  var on = acsParseDT(vals.onset_dt), dr = acsParseDT(vals.door_dt);
+  if (on !== null && dr !== null && dr < on) E('door_dt', 'Door time is before symptom onset.', 'وقت الوصول قبل بدء الأعراض.');
+  if (dr !== null && ad !== null) {
+    var doorDay = Date.UTC(new Date(dr).getUTCFullYear(), new Date(dr).getUTCMonth(), new Date(dr).getUTCDate());
+    if (ad < doorDay) E('admission_date', 'Admission date is before the ED arrival date.', 'تاريخ الدخول قبل تاريخ الوصول للإسعاف.');
+    else if (ad - doorDay > 2 * 86400000) W('ADM_GAP', 'admission_date', 'Admission is more than 2 days after ED arrival — check dates.', 'الدخول بعد أكثر من يومين من الوصول للإسعاف — تحقق من التواريخ.');
+  }
+  var sbp = acsNum(vals.sbp_mmhg), dbp = acsNum(vals.dbp_mmhg), hr = acsNum(vals.hr_bpm);
+  if (sbp !== null && dbp !== null && sbp <= dbp) E('sbp_mmhg', 'Systolic must be higher than diastolic.', 'الانقباضي يجب أن يكون أعلى من الانبساطي.');
+
+  /* ----- soft warnings (saved as QC flags, require confirmation) ----- */
+  var mins = acsNum(vals.stod_minutes);
+  if (mins !== null && mins > 43200) W('STOD_LONG', 'onset_dt', 'S-to-D is longer than 30 days — verify onset time.', 'زمن S-to-D أطول من 30 يوماً — تحقق من وقت البدء.');
+  var acs = vals.acs_type, tro = vals.troponin_status, ecg = vals.ecg;
+  if ((acs === 'STEMI' || acs === 'NSTEMI') && tro === 'Negative') W('DX_TROP', 'acs_type', 'STEMI/NSTEMI with negative troponin contradicts the study definition.', 'STEMI/NSTEMI مع تروبونين سلبي يخالف تعريف الدراسة.');
+  if (acs === 'Unstable Angina' && tro === 'Positive') W('DX_TROP_UA', 'acs_type', 'Unstable angina with positive troponin contradicts the study definition.', 'ذبحة غير مستقرة مع تروبونين إيجابي تخالف تعريف الدراسة.');
+  if (acs === 'STEMI' && !acsBlank(ecg) && ecg !== 'ST elevation' && ecg !== 'New LBBB' && ecg !== 'NR') W('DX_ECG', 'acs_type', 'STEMI without ST elevation / new LBBB on ECG.', 'STEMI دون ارتفاع ST أو LBBB جديد في التخطيط.');
+  if ((acs === 'NSTEMI' || acs === 'Unstable Angina') && ecg === 'ST elevation') W('DX_ECG2', 'acs_type', 'NSTEMI/UA with ST elevation on ECG.', 'NSTEMI/UA مع ارتفاع ST في التخطيط.');
+  if (vals.killip_class === 'IV' && vals.cardiogenic_shock === 'No') W('KILLIP_SHOCK', 'killip_class', 'Killip IV but cardiogenic shock = No.', 'Killip IV لكن الصدمة القلبية = لا.');
+  if (vals.killip_class === 'IV' && sbp !== null && sbp >= 100) W('KILLIP_SBP', 'killip_class', 'Killip IV with systolic BP ≥100.', 'Killip IV مع ضغط انقباضي ≥100.');
+  if (vals.prior_hf === 'Yes' && vals.heart_failure === 'Yes') W('HF_PRIOR', 'heart_failure', 'New-onset HF recorded in a patient with prior HF.', 'قصور قلب حديث عند مريض لديه قصور قلب سابق.');
+  var age = acsNum(vals.age_years);
+  if (age !== null && age > 100) W('AGE_HIGH', 'age_years', 'Age above 100 — verify.', 'العمر فوق 100 — تحقق.');
+  var los = acsNum(vals.los_days);
+  if (los !== null && los > 60) W('LOS_LONG', 'discharge_date', 'Length of stay above 60 days — verify.', 'مدة الإقامة فوق 60 يوماً — تحقق.');
+  if (hr !== null && (hr < 35 || hr > 180)) W('HR_EXT', 'hr_bpm', 'Heart rate is extreme — verify.', 'معدل النبض متطرف — تحقق.');
+  if (sbp !== null && (sbp < 70 || sbp > 220)) W('SBP_EXT', 'sbp_mmhg', 'Systolic BP is extreme — verify.', 'الضغط الانقباضي متطرف — تحقق.');
+  var d2b = acsNum(vals.d2b_min), d2n = acsNum(vals.d2n_min);
+  if (d2b !== null && d2b > 240) W('D2B_LONG', 'd2b_min', 'Door-to-balloon above 240 min — verify.', 'زمن الوصول للبالون فوق 240 دقيقة — تحقق.');
+  if (d2n !== null && d2n > 240) W('D2N_LONG', 'd2n_min', 'Door-to-needle above 240 min — verify.', 'زمن الوصول للإبرة فوق 240 دقيقة — تحقق.');
+
+  return { errors: errors, warnings: warnings, values: vals };
+}
+
+/* ------------------------------ coding for export ------------------------------ */
+function acsCode(f, value) {
+  if (value === undefined || value === null || value === '' || value === 'NR' || value === 'NA') return '';
+  if (!f.opts) return value;
+  if (f.codes) return f.codes[value] !== undefined ? f.codes[value] : '';
+  if (value === 'Yes') return 1;
+  if (value === 'No') return 0;
+  var vs = acsOptVals(f), idx = vs.indexOf(value);
+  return idx >= 0 ? idx + 1 : '';
+}
+function acsCodingText(f) {
+  if (!f.opts) return '';
+  var parts = [];
+  var vs = acsOptVals(f);
+  for (var i = 0; i < vs.length; i++) {
+    if (vs[i] === 'NR') continue;
+    parts.push(acsCode(f, vs[i]) + '=' + vs[i]);
+  }
+  return parts.join('; ') + (acsAllowsNR(f) || f.t === 'calc' ? '; NR/NA=blank' : '');
+}
+
+/* ---------------------- agreement statistics (IRR) ---------------------- */
+function acsKappa(pairs) {
+  var n = pairs.length;
+  if (!n) return null;
+  var ra = {}, rb = {}, po = 0, i, c;
+  for (i = 0; i < n; i++) {
+    var a = pairs[i][0], b = pairs[i][1];
+    if (a === b) po++;
+    ra[a] = (ra[a] || 0) + 1; rb[b] = (rb[b] || 0) + 1;
+  }
+  po = po / n;
+  var pe = 0;
+  for (c in ra) { if (rb[c] !== undefined) pe += (ra[c] / n) * (rb[c] / n); }
+  var kappa;
+  if (pe >= 1) kappa = po >= 1 ? 1 : null; else kappa = (po - pe) / (1 - pe);
+  var se = (pe >= 1 || kappa === null) ? null : Math.sqrt(po * (1 - po) / (n * Math.pow(1 - pe, 2)));
+  return { n: n, agree: po, kappa: kappa, lo: se === null ? null : kappa - 1.96 * se, hi: se === null ? null : kappa + 1.96 * se };
+}
+function acsICC21(pairs) {
+  var n = pairs.length, k = 2;
+  if (n < 3) return null;
+  var gm = 0, i;
+  for (i = 0; i < n; i++) gm += pairs[i][0] + pairs[i][1];
+  gm /= (n * k);
+  var c1 = 0, c2 = 0, ssr = 0;
+  for (i = 0; i < n; i++) { c1 += pairs[i][0]; c2 += pairs[i][1]; }
+  c1 /= n; c2 /= n;
+  for (i = 0; i < n; i++) { var rm = (pairs[i][0] + pairs[i][1]) / 2; ssr += Math.pow(rm - gm, 2); }
+  var msr = k * ssr / (n - 1);
+  var msc = n * (Math.pow(c1 - gm, 2) + Math.pow(c2 - gm, 2)) / (k - 1);
+  var sse = 0;
+  for (i = 0; i < n; i++) {
+    var rm2 = (pairs[i][0] + pairs[i][1]) / 2;
+    sse += Math.pow(pairs[i][0] - rm2 - c1 + gm, 2) + Math.pow(pairs[i][1] - rm2 - c2 + gm, 2);
+  }
+  var mse = sse / ((n - 1) * (k - 1));
+  var den = msr + (k - 1) * mse + k * (msc - mse) / n;
+  if (!isFinite(den) || den === 0) return null;
+  return { n: n, icc: (msr - mse) / den };
+}
+
+/* ======================================================================
+   ACS PORTAL — CLIENT
+   ====================================================================== */
+var OFFLINE = (typeof ACS_OFFLINE !== 'undefined' && ACS_OFFLINE === true);
+var S = { cache: {}, vt: 0, token: null, user: null, boot: null, tab: 'collect', hosp: null, year: ACS_DEFAULT_YEAR, list: null, filter: 'all', q: '', form: null, irrHosp: null, irrQueue: null, dash: null, adminSub: 'users', mustChange: false, lastAct: Date.now() };
+var IRR_KEYS_C = ACS_FIELDS.filter(function (f) { return f.irr; }).map(function (f) { return f.k; });
+
+/* ---------- utilities ---------- */
+function esc(s) { return String(s === undefined || s === null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+function bi(ar, en) { return '<span class="ar">' + esc(ar) + '</span><span class="en">' + esc(en) + '</span>'; }
+function $(id) { return document.getElementById(id); }
+function toast(msg, bad) {
+  var t = $('toast'); t.innerHTML = '<div class="' + (bad ? 'bad' : '') + '">' + msg + '</div>';
+  clearTimeout(toast._t); toast._t = setTimeout(function () { t.innerHTML = ''; }, bad ? 6000 : 2800);
+}
+function api(action, payload) {
+  if (!READ_ACTIONS[action]) S.cache = {};
+  return new Promise(function (resolve, reject) {
+    google.script.run
+      .withSuccessHandler(function (r) {
+        if (r && r.ok) return resolve(r.data);
+        r = r || { msg: 'No response', code: 'ERR' };
+        if (r.code === 'AUTH') { S.token = null; S.user = null; ssDel('acs_sess'); render(r.msg); }
+        else if (r.code === 'MUST_CHANGE') { S.mustChange = true; render(); }
+        reject(r);
+      })
+      .withFailureHandler(function (e) { reject({ code: 'NET', msg: (e && e.message) || 'Connection error' }); })
+      .apiCall(action, S.token, payload || {});
+  });
+}
+/* view-load requests: if the user moved to another tab before the reply arrives, drop the reply silently */
+function vapi(action, payload) {
+  var tok = S.vt;
+  return new Promise(function (resolve, reject) {
+    api(action, payload).then(function (r) { if (tok === S.vt) resolve(r); }, function (e) { if (tok === S.vt) reject(e); });
+  });
+}
+/* stale-while-revalidate for read-only view loads: show the last result instantly, refresh quietly, re-render only if data changed */
+var READ_ACTIONS = { bootstrap: 1, records: 1, getRecord: 1, dashboard: 1, irrQueue: 1, irrGet: 1, users: 1, hospitalsAll: 1, audit: 1, 'export': 1, logTime: 1 };
+function swr(action, payload) {
+  var tok = S.vt, key = action + '|' + JSON.stringify(payload || {}), hold = { f: null };
+  return {
+    then: function (cb) {
+      var c = S.cache[key], shown = !!c;
+      if (c) { try { cb(c.d); } catch (e) { console.error(e); } }
+      api(action, payload).then(function (d) {
+        if (tok !== S.vt) return;
+        var js = JSON.stringify(d);
+        S.cache[key] = { d: d, js: js };
+        if (!c || c.js !== js) cb(d);
+      }, function (e) { if (tok !== S.vt) return; if (shown && e && e.code === 'NET') return; if (hold.f) hold.f(e); });
+      return { catch: function (f) { hold.f = f; } };
+    }
+  };
+}
+function fail(e) { if (e && (e.code === 'AUTH' || e.code === 'MUST_CHANGE')) return; toast(esc((e && e.msg) || String(e)), true); }
+/* ---------- session persistence across page refresh (tab-scoped; cleared on sign-out / tab close) ---------- */
+function ssGet(k) { try { return window.sessionStorage.getItem(k) || ''; } catch (e) { return ''; } }
+function ssSet(k, v) { try { window.sessionStorage.setItem(k, v); } catch (e) { } }
+function ssDel(k) { try { window.sessionStorage.removeItem(k); } catch (e) { } }
+function saveSess() {
+  if (OFFLINE) return;
+  if (!S.token || !S.user) { ssDel('acs_sess'); return; }
+  ssSet('acs_sess', JSON.stringify({ token: S.token, user: S.user, tab: S.tab, hosp: S.hosp, year: S.year, mustChange: !!S.mustChange }));
+}
+function restoreSession() {
+  var raw = OFFLINE ? '' : ssGet('acs_sess'), sv = null;
+  try { sv = raw ? JSON.parse(raw) : null; } catch (e) { sv = null; }
+  if (!sv || !sv.token || !sv.user) { render(); return; }
+  S.token = sv.token; S.user = sv.user; S.mustChange = !!sv.mustChange;
+  if (S.mustChange) { render(); return; }
+  $('app').innerHTML = '<div class="login"><p class="muted" style="text-align:center">…</p></div>';
+  api('bootstrap').then(function (b) {
+    S.boot = b; S.user = b.user;
+    if (sv.year) S.year = sv.year;
+    if (sv.hosp && b.hospitals.some(function (h) { return h.code === sv.hosp; })) S.hosp = sv.hosp;
+    if (sv.tab) S.tab = sv.tab;
+    render();
+  }).catch(function (e) {
+    if (e && (e.code === 'AUTH' || e.code === 'MUST_CHANGE')) return;
+    S.token = null; S.user = null; ssDel('acs_sess'); render();
+  });
+}
+function modal(html, onMount) {
+  var root = $('modal-root');
+  root.innerHTML = '<div class="mback"><div class="modal" role="dialog" aria-modal="true">' + html + '</div></div>';
+  if (onMount) onMount(root);
+  return root;
+}
+function closeModal() { $('modal-root').innerHTML = ''; }
+function isAdmin() { return S.user && S.user.role === 'Admin'; }
+function canEnter() { return S.user && (S.user.role === 'Admin' || S.user.role === 'Collector'); }
+function hospName(code) {
+  var hs = (S.boot && S.boot.hospitals) || [];
+  for (var i = 0; i < hs.length; i++) if (hs[i].code === code) return hs[i];
+  return { code: code, name_en: code, name_ar: code };
+}
+function stat(v) { return v === 'NA' ? '' : v; }
+function pad2(n) { return (n < 10 ? '0' : '') + n; }
+function fmtDur(sec) { sec = Number(sec) || 0; return Math.floor(sec / 3600) + ' h ' + pad2(Math.floor(sec % 3600 / 60)) + ' min'; }
+function fmtClock(sec) { sec = Number(sec) || 0; return pad2(Math.floor(sec / 60)) + ':' + pad2(sec % 60); }
+function timerText() {
+  var F = S.form; if (!F) return '';
+  return '⏱ ' + fmtClock(F.secs) + (F.total ? ' (+ ' + fmtDur(F.total) + ')' : '');
+}
+function flushTime() {
+  var F = S.form;
+  if (!F || (F.ro && !F.irr) || F.secs < 5) return;
+  var secs = F.secs; F.secs = 0;
+  api('logTime', { hospital: F.hosp, code: F.code, secs: secs, kind: F.irr ? 'irr' : 'entry' }).catch(function () { });
+}
+function fmtPct(v) { return v === null || v === undefined ? '—' : v + '%'; }
+
+/* ---------- number sanitising (English digits only) ---------- */
+function cleanNum(s, dec) {
+  var conv = false;
+  s = String(s).replace(/[\u0660-\u0669]/g, function (c) { conv = true; return String(c.charCodeAt(0) - 0x660); })
+    .replace(/[\u06F0-\u06F9]/g, function (c) { conv = true; return String(c.charCodeAt(0) - 0x6F0); })
+    .replace(/[\u066B\u066C\u060C,]/g, '.');
+  s = s.replace(dec ? /[^0-9.]/g : /[^0-9]/g, '');
+  if (dec) { var i = s.indexOf('.'); if (i >= 0) s = s.substring(0, i + 1) + s.substring(i + 1).replace(/\./g, ''); }
+  return { v: s, conv: conv };
+}
+
+/* ======================================================================
+   ROOT RENDER
+   ====================================================================== */
+function render(msg) {
+  var app = $('app');
+  if (!S.token) { S.cache = {}; app.innerHTML = loginHtml(msg); return; }
+  if (S.mustChange) { app.innerHTML = pwHtml(); return; }
+  var tabs = tabsFor();
+  if (tabs.indexOf(S.tab) < 0) S.tab = tabs[0];
+  var names = { collect: ['جمع البيانات', 'Data entry'], irr: ['المراجعة المستقلة', 'Reliability'], sync: ['المزامنة', 'Sync'], dash: ['لوحة المتابعة', 'Dashboard'], export: ['التصدير', 'Export'], admin: ['الإدارة', 'Admin'], guide: ['الدليل', 'Guide'] };
+  app.innerHTML = '<header class="top"><div class="brand"><b>بوابة بيانات ACS</b><span>ACS Prehospital Delay · Data Portal</span></div>' +
+    '<div class="who">' + (OFFLINE ? '<span class="role" id="net"></span>' : '') + '<span>' + esc(S.user.name) + '</span>' + (OFFLINE ? '' : '<span class="role">' + esc(S.user.role) + '</span>') + (OFFLINE ? '<button class="btn alt small" data-act="lock">' + bi('قفل', 'Lock') + '</button>' : '<button class="btn alt small" data-act="logout">' + bi('خروج', 'Sign out') + '</button>') + '</div></header>' +
+    '<nav class="nav">' + tabs.map(function (t) { return '<button data-act="tab" data-t="' + t + '" class="' + (S.tab === t ? 'on' : '') + '">' + bi(names[t][0], names[t][1]) + '</button>'; }).join('') + '</nav>' +
+    (OFFLINE ? '<div id="syncbar"></div>' : '') +
+    ((S.boot && S.boot.config && S.boot.config.locked_at) ? '<div class="warn-box" style="margin:0;border-radius:0;text-align:center">' + bi('قاعدة البيانات مقفلة للتحليل منذ ' + S.boot.config.locked_at + ' — لا يمكن الإدخال أو التعديل.', 'Database locked for analysis since ' + S.boot.config.locked_at + ' — no entry or edits.') + '</div>' : '') +
+    '<main id="view"></main>';
+  showTab(S.tab);
+  if (typeof updateNet === 'function') updateNet();
+  if (typeof updateSyncBanner === 'function') updateSyncBanner();
+}
+function tabsFor() {
+  if (OFFLINE) return ['collect', 'sync', 'guide'];
+  if (S.user.role === 'Admin') return ['collect', 'irr', 'dash', 'export', 'admin', 'guide'];
+  if (S.user.role === 'Collector') return ['collect', 'irr', 'guide'];
+  return ['dash', 'export', 'guide'];
+}
+function showTab(t) {
+  S.guideEdit = false; S.guideDirty = false; S.vt++; S.tab = t; saveSess();
+  Array.prototype.forEach.call(document.querySelectorAll('.nav button'), function (b) { b.className = b.getAttribute('data-t') === t ? 'on' : ''; });
+  window.scrollTo(0, 0);
+  if (t === 'collect') viewCollect();
+  else if (t === 'irr') viewIrr();
+  else if (t === 'dash') viewDash();
+  else if (t === 'export') viewExport();
+  else if (t === 'admin') viewAdmin();
+  else if (t === 'guide') $('view').innerHTML = guideView();
+  else if (t === 'sync' && typeof viewSync === 'function') viewSync();
+}
+
+/* ---------- login ---------- */
+function loginHtml(msg) {
+  return '<div class="login"><div class="card"><h2 style="margin-top:0">' + bi('تسجيل الدخول', 'Sign in') + '</h2>' +
+    '<p class="muted" style="margin-top:-6px">' + bi('بوابة جمع بيانات بحث ACS — للمخوّلين فقط', 'ACS research data portal — authorised users only') + '</p>' +
+    (msg ? '<div class="err-box">' + esc(msg) + '</div>' : '') +
+    '<div class="fld"><label class="l bi">' + bi('اسم المستخدم', 'Username') + '</label><input id="lu" type="text" dir="ltr" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false"></div><div class="sp"></div>' +
+    '<div class="fld"><label class="l bi">' + bi('كلمة المرور', 'Password') + '</label><input id="lp" type="password" dir="ltr" autocomplete="current-password" autocapitalize="none" autocorrect="off" spellcheck="false"></div>' +
+    '<label class="nrchk" style="margin:8px 0"><input type="checkbox" data-act="pwshow"> ' + bi('إظهار كلمة المرور', 'Show password') + '</label>' +
+    '<button class="btn" style="width:100%" data-act="login" id="lbtn">' + bi('دخول', 'Sign in') + '</button></div></div>';
+}
+function pwHtml() {
+  return '<div class="login"><div class="card"><h2 style="margin-top:0">' + bi('غيّر كلمة المرور المؤقتة', 'Set a new password') + '</h2>' +
+    '<p class="muted">' + bi('١٠ أحرف على الأقل مع حروف وأرقام.', 'At least 10 characters with letters and digits.') + '</p><div id="pwerr"></div>' +
+    '<div class="fld"><label class="l bi">' + bi('كلمة المرور الحالية', 'Current password') + '</label><input id="p0" type="password" dir="ltr" autocomplete="current-password"></div><div class="sp"></div>' +
+    '<div class="fld"><label class="l bi">' + bi('كلمة المرور الجديدة', 'New password') + '</label><input id="p1" type="password" dir="ltr" autocomplete="new-password"></div><div class="sp"></div>' +
+    '<div class="fld"><label class="l bi">' + bi('تأكيد كلمة المرور', 'Confirm password') + '</label><input id="p2" type="password" dir="ltr" autocomplete="new-password"></div><div class="sp"></div>' +
+    '<button class="btn" style="width:100%" data-act="chpw">' + bi('حفظ ومتابعة', 'Save and continue') + '</button></div></div>';
+}
+/* strip invisible bidi/zero-width marks, NBSP and edge spaces that Android keyboards / WhatsApp copy-paste add */
+function cleanCred(v) { return String(v || '').replace(/[\u200B-\u200F\u202A-\u202E\u2060-\u2069\uFEFF\u00A0]/g, '').trim(); }
+function doLogin() {
+  var u = cleanCred($('lu').value), p = cleanCred($('lp').value);
+  if (!u || !p) { render('أدخل اسم المستخدم وكلمة المرور · Enter username and password'); return; }
+  $('lbtn').disabled = true;
+  api('login', { username: u, password: p }).then(function (r) {
+    S.token = r.token; S.user = r.user; S.mustChange = r.mustChange; saveSess();
+    if (r.mustChange) { render(); return; }
+    return afterLogin();
+  }).catch(function (e) { render(e.msg || 'Error'); });
+}
+function afterLogin() {
+  return api('bootstrap').then(function (b) { S.boot = b; S.user = b.user; S.tab = 'collect'; saveSess(); render(); }).catch(fail);
+}
+function doChangePw() {
+  var a = cleanCred($('p0').value), b = cleanCred($('p1').value), c = cleanCred($('p2').value);
+  if (b !== c) { $('pwerr').innerHTML = '<div class="err-box">كلمتا المرور غير متطابقتين · Passwords do not match</div>'; return; }
+  api('changePassword', { oldPassword: a, newPassword: b }).then(function () { S.mustChange = false; saveSess(); return afterLogin(); })
+    .catch(function (e) { $('pwerr').innerHTML = '<div class="err-box">' + esc(e.msg || 'Error') + '</div>'; });
+}
+function doLogout() { api('logout').catch(function () { }); ssDel('acs_sess'); S.token = null; S.user = null; S.boot = null; S.form = null; S.hosp = null; S.list = null; render(); }
+
+/* ======================================================================
+   COLLECT
+   ====================================================================== */
+function viewCollect() {
+  if (S.form) { renderForm(); return; }
+  if (!S.hosp) { hospPicker(); return; }
+  recordList();
+}
+function hospPicker() {
+  swr('bootstrap').then(function (b) {
+    S.boot = b;
+    var hs = b.hospitals;
+    $('view').innerHTML = '<h2>' + bi('اختر المشفى الذي تجمع منه البيانات', 'Choose the hospital you are collecting from') + '</h2>' +
+      '<p class="muted">' + bi('كل مشفى له قاعدة بيانات منفصلة. اختر المشفى أولاً ثم ابدأ الإدخال.', 'Each hospital has its own separate dataset. Choose the hospital first, then start entering.') + '</p>' +
+      (hs.length ? '<div class="hgrid">' + hs.map(function (h) {
+        var c = h.counts;
+        return '<button class="hcard" data-act="pickh" data-h="' + esc(h.code) + '"><span class="nm">' + esc(h.name_ar) + '</span><span class="en">' + esc(h.name_en) + '</span>' +
+          '<span class="cnt"><span class="pill">' + c.total + ' ' + 'سجل · rec' + '</span><span class="pill d">' + c.Draft + ' مسودة</span><span class="pill s">' + c.Submitted + ' مُسلَّم</span><span class="pill v">' + c.Verified + ' متحقَّق</span></span>' +
+          (h.note ? '<span class="en">' + esc(h.note) + '</span>' : '') + '</button>';
+      }).join('') + '</div>' : '<div class="warn-box">' + bi('لا يوجد مشفى مخصّص لحسابك. تواصل مع المشرف.', 'No hospital is assigned to your account. Contact the admin.') + '</div>');
+  }).catch(fail);
+}
+function loadList() {
+  return vapi('records', { hospital: S.hosp }).then(function (l) { S.list = l; });
+}
+function recordList() {
+  var h = hospName(S.hosp);
+  var render1 = function () {
+    var list = S.list || [];
+    var shown = list.filter(function (r) { return (S.filter === 'all' || r.status === S.filter) && (!S.q || r.patient_code.toLowerCase().indexOf(S.q.toLowerCase()) >= 0); });
+    var cnt = { all: list.length, Draft: 0, Submitted: 0, Verified: 0, Excluded: 0 };
+    list.forEach(function (r) { cnt[r.status] = (cnt[r.status] || 0) + 1; });
+    var yearOpts = ACS_YEARS.map(function (y) { return '<option value="' + y + '"' + (y === S.year ? ' selected' : '') + '>' + y + '</option>'; }).join('');
+    $('view').innerHTML = '<div class="card"><div class="fhead"><div><div class="ar" style="font-size:1.15rem">' + esc(h.name_ar) + '</div><div class="en">' + esc(h.name_en) + '</div></div>' +
+      '<div class="row"><div><label class="l bi">' + bi('سنة الدخول', 'Admission year') + '</label><select id="yr" style="min-width:110px" dir="ltr">' + yearOpts + '</select></div>' +
+      '<button class="btn" data-act="newchart">' + bi('إضبارة جديدة', 'New chart') + '</button>' +
+      '<button class="btn alt" data-act="changeh">' + bi('تغيير المشفى', 'Change hospital') + '</button></div></div>' +
+      '<p class="muted" style="margin-bottom:0">' + bi('افرز الإضابير بالتتابع حسب تاريخ الدخول، ولا تتخطَّ أي إضبارة مؤهلة.', 'Screen charts consecutively by admission date — do not skip any eligible chart.') + '</p></div>' +
+      '<div class="row" style="margin-bottom:10px"><div class="tabs2">' + ['all', 'Draft', 'Submitted', 'Verified', 'Excluded'].map(function (s) {
+        var nm = { all: 'الكل · All', Draft: 'مسودة · Draft', Submitted: 'مُسلَّم · Submitted', Verified: 'متحقَّق · Verified', Excluded: 'مستبعد · Excluded' }[s];
+        return '<button data-act="filt" data-s="' + s + '" class="' + (S.filter === s ? 'on' : '') + '">' + nm + ' (' + (cnt[s] || 0) + ')</button>';
+      }).join('') + '</div><div class="grow"><input id="q" type="text" dir="ltr" placeholder="Search code · بحث بالكود" value="' + esc(S.q) + '"></div></div>' +
+      '<div class="tw"><table><thead><tr><th>' + bi('الكود', 'Code') + '</th><th>' + bi('الحالة', 'Status') + '</th><th>' + bi('تاريخ الدخول', 'Admission') + '</th><th class="num">' + bi('العمر', 'Age') + '</th><th>' + bi('الجنس', 'Sex') + '</th><th>ACS</th><th class="num">S-to-D (h)</th><th>' + bi('الاكتمال', 'Completeness') + '</th><th class="num">' + bi('تنبيهات', 'Flags') + '</th><th>' + bi('آخر تعديل', 'Updated') + '</th></tr></thead><tbody>' +
+      (shown.length ? shown.map(function (r) {
+        return '<tr class="clk" data-act="open" data-c="' + esc(r.patient_code) + '"><td class="code" style="font-size:.95rem">' + esc(r.patient_code) + '</td><td><span class="badge ' + r.status + '">' + r.status + '</span></td><td dir="ltr">' + esc(stat(r.admission_date)) + '</td><td class="num">' + esc(r.age_years) + '</td><td>' + esc(r.sex) + '</td><td>' + esc(r.acs_type) + '</td><td class="num">' + esc(stat(r.stod_hours)) + (r.delayed_12h === 'Yes' ? ' <span class="pill x">&gt;12h</span>' : '') + '</td><td>' + (r.completeness === 'Complete' ? '<span class="pill v">مكتمل</span>' : r.completeness === 'Incomplete' ? '<span class="pill d">غير مكتمل · ' + esc(r.nr_count) + ' NR</span>' : '') + '</td><td class="num">' + (r.flags ? '<span class="pill d">' + r.flags + '</span>' : '') + '</td><td dir="ltr">' + esc(r.updated_at) + '</td></tr>';
+      }).join('') : '<tr><td colspan="10" class="muted" style="padding:22px;text-align:center">' + bi('لا توجد سجلات بعد — ابدأ بـ «إضبارة جديدة».', 'No records yet — start with “New chart”.') + '</td></tr>') + '</tbody></table></div>';
+  };
+  if (S.list === null) { $('view').innerHTML = '<p class="muted">…</p>'; loadList().then(render1).catch(fail); } else render1();
+}
+
+/* ---------- screening ---------- */
+function screenModal() {
+  var reasons = ACS_EXCL_REASONS.map(function (r, i) {
+    return '<label><input type="radio" name="xr" value="' + i + '"><span><span class="ar">' + esc(r.ar) + '</span><br><span class="en">' + esc(r.v) + '</span></span></label>';
+  }).join('');
+  modal('<h3>' + bi('فرز الإضبارة قبل الإدخال', 'Screen the chart before entry') + '</h3>' +
+    '<div class="warn-box" style="margin-top:0">' + bi('التضمين: بالغ ≥١٨ سنة، ACS مؤكد (STEMI / NSTEMI / UA)، دخول ضمن فترة الدراسة.', 'Include: adult ≥18, confirmed ACS (STEMI / NSTEMI / UA), admitted in the study period.') + '</div>' +
+    '<div id="sc1"><div class="row"><button class="btn grow" data-act="sc-inc">' + bi('مؤهلة — ابدأ إدخال البيانات', 'Eligible — start data entry') + '</button>' +
+    '<button class="btn danger grow" data-act="sc-exc1">' + bi('مستبعدة…', 'Exclude…') + '</button></div></div>' +
+    '<div id="sc2" class="hide"><p class="muted" style="margin:6px 0">' + bi('اختر سبب الاستبعاد (يُسجَّل في مخطط STROBE بدون أي بيانات سريرية):', 'Pick the exclusion reason (logged for the STROBE flow; no clinical data is stored):') + '</p><div class="rlist">' + reasons + '</div>' +
+    '<div class="acts"><button class="btn alt" data-act="sc-back">' + bi('رجوع', 'Back') + '</button><button class="btn danger" data-act="sc-exc2">' + bi('تسجيل الاستبعاد', 'Log exclusion') + '</button></div></div>' +
+    '<div class="acts"><button class="btn alt small" data-act="closem">' + bi('إلغاء', 'Cancel') + '</button></div>');
+}
+function doScreen(outcome, reason) {
+  api('screen', { hospital: S.hosp, year: S.year, outcome: outcome, reason: reason || '' }).then(function (r) {
+    closeModal(); S.list = null;
+    if (outcome === 'Included') { toast((OFFLINE ? 'كود مؤقت — دوّنه بجانب رقم الإضبارة بسجلك الورقي · Temporary code — write it next to the file number: ' : 'تم إنشاء الكود · Code created: ') + esc(r.patient_code)); openRecord(r.patient_code); }
+    else { toast('سُجّل الاستبعاد · Exclusion logged'); recordList(); }
+  }).catch(fail);
+}
+
+/* ======================================================================
+   FORM ENGINE
+   ====================================================================== */
+function emptyVals() { var v = {}; ACS_FIELDS.forEach(function (f) { if (f.t !== 'calc') v[f.k] = ''; }); return v; }
+function openRecord(code) {
+  vapi('getRecord', { hospital: S.hosp, code: code }).then(function (rec) {
+    var vals = emptyVals();
+    ACS_FIELDS.forEach(function (f) {
+      if (f.t === 'calc') return;
+      var x = rec[f.k]; x = (x === undefined || x === null || x === 'NA') ? '' : String(x);
+      if (f.t === 'dt' && x) x = x.replace(' ', 'T');
+      vals[f.k] = x;
+    });
+    var yr = acsParseDate(vals.admission_date) !== null ? new Date(acsParseDate(vals.admission_date)).getUTCFullYear() : S.year;
+    var ro = rec.status === 'Excluded' || (rec.status === 'Verified' && !isAdmin()) || !canEnter();
+    S.form = { hosp: S.hosp, code: code, status: rec.status, year: yr, vals: vals, errs: {}, dirty: false, ro: ro, irr: false, flags: rec.qc_flags || '', exclReason: rec.exclusion_reason || '', secs: 0, total: Number(rec.entry_seconds) || 0, ver: 0 };
+    S.tab = 'collect'; renderForm();
+  }).catch(fail);
+}
+function fieldList() { return S.form.irr ? ACS_FIELDS.filter(function (f) { return f.irr; }) : ACS_FIELDS; }
+function labelHtml(f) { return '<label class="l bi" for="f_' + f.k + '">' + bi(f.ar, f.en) + '</label>'; }
+function hintHtml(f) { return f.hint ? '<div class="hint">' + esc(f.hint.ar) + '<span class="en">' + esc(f.hint.en) + '</span></div>' : ''; }
+function inputHtml(f, val, dis) {
+  var d = dis ? ' disabled' : '', id = 'f_' + f.k, k = ' data-k="' + f.k + '"';
+  if (f.t === 'sel') {
+    if (f.opts.length <= 5) {
+      return '<div class="chips' + (dis ? ' dis' : '') + '" role="radiogroup">' + f.opts.map(function (o, i) {
+        var rid = id + '_' + i;
+        return '<input type="radio" name="' + id + '" id="' + rid + '" value="' + esc(o.v) + '"' + k + (val === o.v ? ' checked' : '') + d + '><label for="' + rid + '"><span class="ar">' + esc(o.ar) + '</span><span class="en">' + esc(o.v) + '</span></label>';
+      }).join('') + '</div>';
+    }
+    return '<select id="' + id + '"' + k + d + '><option value="">— اختر · Choose —</option>' + f.opts.map(function (o) { return '<option value="' + esc(o.v) + '"' + (val === o.v ? ' selected' : '') + '>' + esc(o.ar) + ' · ' + esc(o.v) + '</option>'; }).join('') + '</select>';
+  }
+  if (f.t === 'int' || f.t === 'num') {
+    var isNR = val === 'NR';
+    return '<div class="nrrow"><input type="text" id="' + id + '"' + k + ' dir="ltr" inputmode="' + (f.t === 'num' ? 'decimal' : 'numeric') + '" autocomplete="off" placeholder="' + (f.min !== undefined ? f.min + '–' + f.max : '') + '" value="' + (isNR ? '' : esc(val)) + '"' + (isNR || dis ? ' disabled' : '') + '>' +
+      (f.unit ? '<span class="u">' + esc(f.unit) + '</span>' : '') +
+      (f.nr ? '<label class="nrchk"><input type="checkbox" data-nr="' + f.k + '"' + (isNR ? ' checked' : '') + d + '> NR</label>' : '') + '</div>';
+  }
+  if (f.t === 'date') {
+    var mn = '', mx = '';
+    if (f.k === 'admission_date') { mn = S.form.year + '-01-01'; mx = S.form.year + '-12-31'; }
+    return '<input type="date" id="' + id + '"' + k + ' dir="ltr" value="' + esc(val) + '"' + (mn ? ' min="' + mn + '" max="' + mx + '"' : '') + d + '>';
+  }
+  if (f.t === 'dt') {
+    var dv = String(val || ''), dp = dv.split('T');
+    return '<div class="dtrow"><input type="date" id="' + id + '" data-dt="' + f.k + '" data-p="d" dir="ltr" value="' + esc(dp[0] || '') + '"' + d + '>' +
+      '<input type="text" id="' + id + '_t" data-dt="' + f.k + '" data-p="t" dir="ltr" inputmode="numeric" autocomplete="off" maxlength="5" placeholder="HH:MM  (24h)" value="' + esc(dp[1] || '') + '"' + d + '></div>';
+  }
+  return '<textarea id="' + id + '"' + k + ' maxlength="500"' + d + '>' + esc(val) + '</textarea>';
+}
+function calcVal(f, v) {
+  if (v === '' || v === undefined || v === null) return '<span class="na">—</span>';
+  if (v === 'NA') return '<span class="na">N/A</span>';
+  var o = f.opts ? f.opts.filter(function (x) { return x.v === v; })[0] : null;
+  return esc(v) + (o && o.ar !== v ? ' <span class="en" style="color:var(--muted)">' + esc(o.ar) + '</span>' : '') + (f.unit && v !== 'NR' ? ' ' + esc(f.unit) : '');
+}
+function renderForm() {
+  var F = S.form, h = hospName(F.hosp), irr = F.irr;
+  var fields = fieldList();
+  var secs = ACS_SECTIONS.filter(function (s) { return fields.some(function (f) { return f.s === s.id; }); });
+  var html = '<div class="card"><div class="fhead"><div><div class="code">' + esc(F.code) + '</div><div class="ar">' + esc(h.name_ar) + '</div><div class="en">' + esc(h.name_en) + '</div></div>' +
+    '<div style="text-align:end">' + (irr ? '<span class="badge Submitted">' + 'مراجعة مستقلة · Independent rating' + '</span>' : '<span class="badge ' + F.status + '">' + F.status + '</span> <span class="pill">' + (F.year) + '</span>') +
+    (F.flags && !irr ? '<div class="en" style="margin-top:4px">QC: ' + esc(F.flags.split(';').join(' · ')) + '</div>' : '') +
+    (F.ro && !irr ? '' : '<div class="en" style="margin-top:4px" id="tmr" title="Active time (idle time is not counted)">' + esc(timerText()) + '</div>' + (F.status === 'Draft' ? '<div class="en" style="margin-top:2px" id="autosv">' + esc('الحفظ التلقائي مفعّل · autosave on') + '</div>' : '')) + '</div></div>' +
+    (irr ? '<div class="warn-box">' + bi('أنت المقيّم الثاني: أدخل القيم من الإضبارة نفسها دون الاطلاع على إدخال المقيّم الأول.', 'You are the second rater: enter the values from the chart itself. The first rater’s entries are hidden from you.') + '</div>' : '') +
+    (F.ro && !irr ? '<div class="warn-box">' + bi(F.status === 'Excluded' ? 'هذه الإضبارة مستبعدة' + (F.exclReason ? ' (' + F.exclReason + ')' : '') + ' — القراءة فقط.' : 'السجل مقفل — القراءة فقط.', F.status === 'Excluded' ? 'This chart is excluded — read only.' : 'This record is locked — read only.') + '</div>' : '') +
+    '<div class="snav">' + secs.map(function (s) { return '<a href="#sec_' + s.id + '" data-act="sec" data-s="' + s.id + '">' + esc(s.ar) + ' · ' + esc(s.en) + '</a>'; }).join('') + '</div></div><div id="errsum"></div>';
+  secs.forEach(function (s) {
+    var inSec = fields.filter(function (f) { return f.s === s.id && f.t !== 'calc'; });
+    var calcs = irr ? [] : ACS_FIELDS.filter(function (f) { return f.s === s.id && f.t === 'calc'; });
+    html += '<section class="card sec" id="sec_' + s.id + '"><h3>' + bi(s.ar, s.en) + '</h3>';
+    if (s.id === 'time' && !irr) html += '<div class="gauge" id="gauge"></div>';
+    if (s.id === 'time' && irr) html += '<div class="gauge" id="gauge"></div>';
+    html += '<div class="fgrid">' + inSec.map(function (f) {
+      return '<div class="fld' + (f.t === 'text' ? ' wide' : '') + '" data-f="' + f.k + '">' + labelHtml(f) + inputHtml(f, F.vals[f.k], F.ro) + hintHtml(f) + '<div class="emsg"></div></div>';
+    }).join('') + '</div>';
+    if (calcs.length) {
+      html += '<div class="calc"><h4>' + bi('محسوب تلقائياً — لا يُدخَل يدوياً', 'Calculated automatically — never entered by hand') + '</h4><div class="cgrid">' + calcs.map(function (f) {
+        return '<div class="cv" data-c="' + f.k + '"><div class="k">' + esc(f.ar) + ' · ' + esc(f.en) + '</div><div class="v"></div></div>';
+      }).join('') + '</div></div>';
+    }
+    html += '</section>';
+  });
+  html += '<div class="foot">' + footHtml() + '</div>';
+  $('view').innerHTML = html;
+  refreshForm();
+}
+function footHtml() {
+  var F = S.form, b = '';
+  b += '<button class="btn alt" data-act="back">' + bi(F.irr ? 'رجوع للقائمة' : 'رجوع للقائمة', 'Back to list') + '</button>';
+  if (F.irr) return b + '<button class="btn" data-act="irrsave">' + bi('حفظ التقييم', 'Save rating') + '</button>';
+  if (!F.ro) {
+    if (F.status === 'Draft') b += '<button class="btn alt" data-act="save-draft">' + bi('حفظ كمسودة', 'Save draft') + '</button>';
+    b += '<button class="btn" data-act="save-submit">' + bi(F.status === 'Draft' ? 'تسليم' : 'حفظ التعديلات', F.status === 'Draft' ? 'Submit' : 'Save changes') + '</button>';
+    if (F.status === 'Draft') b += '<button class="btn danger" data-act="reset">' + bi('تصفير الإضبارة', 'Reset chart') + '</button>';
+    b += '<button class="btn danger" data-act="excl">' + bi('استبعاد الإضبارة', 'Exclude chart') + '</button>';
+  }
+  if (isAdmin()) {
+    if (F.status === 'Submitted') b += '<button class="btn alt" data-act="verify">' + bi('تحقّق وقفل', 'Verify & lock') + '</button>';
+    if (F.status === 'Verified') b += '<button class="btn alt" data-act="unlock">' + bi('فتح القفل', 'Unlock') + '</button>';
+    if (F.status === 'Excluded') b += '<button class="btn alt" data-act="restore">' + bi('استعادة كمسودة', 'Restore as draft') + '</button>';
+  }
+  return b;
+}
+function refreshForm() {
+  var F = S.form, a = acsApply(F.vals);
+  fieldList().forEach(function (f) {
+    if (f.t === 'calc') return;
+    var el = document.querySelector('.fld[data-f="' + f.k + '"]');
+    if (el) el.classList.toggle('hide', !acsVisible(f, F.vals));
+  });
+  if (!F.irr) ACS_FIELDS.forEach(function (f) {
+    if (f.t !== 'calc') return;
+    var cv = document.querySelector('.cv[data-c="' + f.k + '"]'); if (!cv) return;
+    var v = a[f.k], vEl = cv.querySelector('.v');
+    vEl.innerHTML = calcVal(f, v);
+    vEl.className = 'v' + ((f.k === 'delayed_12h' || f.k === 'mahce' || f.k === 'mahce_excl_lvef') && v === 'Yes' ? ' yes' : (v === 'No' ? ' good' : ''));
+  });
+  gauge(a);
+  Object.keys(F.errs).forEach(function (k) { markErr(k); });
+}
+function gauge(a) {
+  var g = $('gauge'); if (!g) return;
+  var mins = acsNum(a.stod_minutes), na = a.stod_minutes === 'NA';
+  var h = mins === null ? 0 : mins / 60, late = mins !== null && mins > 720;
+  var pct = Math.min(h, 24) / 24 * 100;
+  var read = na ? 'غير موثق · Not documented' : mins === null ? '— أدخل وقت البدء ووقت الوصول · enter onset and door times —' :
+    (Math.floor(mins / 60) + ' h ' + (mins % 60) + ' min');
+  g.innerHTML = '<div class="read"><span class="ar">زمن S-to-D · Symptom-to-door</span><span class="big" style="color:' + (late ? 'var(--red)' : 'var(--teal3)') + '">' + esc(read) + '</span></div>' +
+    '<div class="track"><div class="fill' + (late ? ' late' : '') + '" style="width:' + (mins === null ? 0 : Math.max(pct, 1.5)) + '%"></div>' +
+    '<div class="tick" style="left:50%"></div><span class="tl tt" style="left:50%">12 h</span>' +
+    '<span class="tl" style="left:0%;transform:none">0</span><span class="tl" style="left:100%;transform:translateX(-100%)">≥24 h</span></div>' +
+    '<div class="read"><span class="en" style="direction:rtl">' + (mins === null ? '' : late ? 'تأخر · Delayed (&gt;12 h)' : 'مبكر · Early (≤12 h)') + '</span></div>';
+}
+function markErr(k) {
+  var el = document.querySelector('.fld[data-f="' + k + '"]'); if (!el) return;
+  var e = S.form.errs[k];
+  el.classList.toggle('err', !!e);
+  el.querySelector('.emsg').innerHTML = e ? esc(e.ar) + '<span class="en">' + esc(e.en) + '</span>' : '';
+}
+function clearErr(k) { if (S.form.errs[k]) { delete S.form.errs[k]; markErr(k); } }
+function setErrors(errs) {
+  var old = Object.keys(S.form.errs); S.form.errs = {};
+  errs.forEach(function (e) { if (!S.form.errs[e.k]) S.form.errs[e.k] = e; });
+  old.forEach(markErr);
+  Object.keys(S.form.errs).forEach(markErr);
+  var sum = $('errsum');
+  if (!errs.length) { sum.innerHTML = ''; return; }
+  var seen = {}, items = errs.filter(function (e) { if (seen[e.k]) return false; seen[e.k] = 1; return true; });
+  sum.innerHTML = '<div class="err-box"><b>' + items.length + ' ' + 'خطأ يمنع الحفظ · error(s) to fix' + '</b><ul style="margin:6px 0 0;padding-inline-start:18px">' + items.slice(0, 12).map(function (e) {
+    var f = ACS_FIELD_MAP[e.k]; return '<li><a href="#" data-act="jump" data-k="' + e.k + '">' + esc(f ? f.ar + ' · ' + f.en : e.k) + '</a> — ' + esc(e.ar) + '</li>';
+  }).join('') + (items.length > 12 ? '<li>…</li>' : '') + '</ul></div>';
+  jumpTo(items[0].k);
+}
+function jumpTo(k) {
+  var el = document.querySelector('.fld[data-f="' + k + '"]'); if (!el) return;
+  el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  var inp = el.querySelector('input,select,textarea'); if (inp) setTimeout(function () { try { inp.focus({ preventScroll: true }); } catch (e) { } }, 350);
+}
+function onFieldInput(el) {
+  var k = el.getAttribute('data-k'), f = ACS_FIELD_MAP[k]; if (!f || !S.form) return;
+  var v = el.value;
+  if (f.t === 'int' || f.t === 'num') {
+    var c = cleanNum(v, f.t === 'num');
+    if (c.v !== v) { el.value = c.v; if (c.conv) toast('حُوّلت الأرقام إلى الإنكليزية · Digits converted to English'); else if (v !== '') toast('أرقام إنكليزية 0-9 فقط · English digits 0-9 only'); }
+    v = c.v;
+  }
+  S.form.vals[k] = v; markDirty(); clearErr(k); refreshForm();
+}
+function onDtInput(el) {
+  var k = el.getAttribute('data-dt'); if (!S.form) return;
+  var dEl = $('f_' + k), tEl = $('f_' + k + '_t');
+  if (el.getAttribute('data-p') === 't') {
+    var raw = el.value, digits = cleanNum(raw, false);
+    var t = digits.v.substring(0, 4);
+    if (t.length >= 3) t = t.substring(0, 2) + ':' + t.substring(2);
+    if (t !== raw) el.value = t;
+    if (digits.conv) toast('حُوّلت الأرقام إلى الإنكليزية · Digits converted to English');
+  }
+  var dv = dEl.value, tv = tEl.value;
+  S.form.vals[k] = (!dv && !tv) ? '' : (dv + 'T' + tv);
+  markDirty(); clearErr(k); refreshForm();
+}
+function collectNow(mode, ack) {
+  var F = S.form;
+  var pre = acsValidate(F.vals, { mode: mode, year: F.year });
+  if (pre.errors.length) { setErrors(pre.errors); toast('صحّح الأخطاء أولاً · Fix the errors first', true); return; }
+  setErrors([]);
+  var sentSecs = F.secs;
+  api('save', { hospital: F.hosp, code: F.code, year: F.year, mode: mode, values: F.vals, ack: !!ack, secs: sentSecs }).then(function (r) {
+    if (r.saved) {
+      F.dirty = false; F.status = r.status; S.list = null; F.total = (F.total || 0) + sentSecs; F.secs = Math.max(0, F.secs - sentSecs);
+      var inc = r.completeness === 'Incomplete';
+      toast((mode === 'submit' ? 'تم التسليم · Submitted ✓' : 'حُفظت المسودة · Draft saved ✓') + (inc && mode === 'submit' ? '<br>صُنِّف «غير مكتمل» (' + r.nr_count + ' NR) · Classified Incomplete' : ''));
+      if (mode === 'submit') { S.form = null; recordList(); } else { F.flags = r.warnings.map(function (w) { return w.c; }).join(';'); renderForm(); }
+    } else if (r.needAck) {
+      modal('<h3>' + bi('تنبيهات جودة — تأكد من الإضبارة', 'Quality warnings — check the chart') + '</h3><div class="warn-box" style="margin-top:0"><ul style="margin:0;padding-inline-start:18px">' +
+        r.warnings.map(function (w) { return '<li>' + esc(w.ar) + '<br><span class="en">' + esc(w.en) + '</span></li>'; }).join('') + '</ul></div>' +
+        '<p class="muted">' + bi('إذا كانت القيم صحيحة وفق الإضبارة اضغط «تأكيد الحفظ». ستُسجَّل هذه التنبيهات مع السجل.', 'If the values match the chart, confirm. These warnings are stored with the record.') + '</p>' +
+        '<div class="acts"><button class="btn alt" data-act="closem">' + bi('رجوع للتعديل', 'Go back and edit') + '</button><button class="btn" data-act="ackok" data-mode="' + mode + '">' + bi('تأكيد الحفظ', 'Confirm and save') + '</button></div>');
+    } else { setErrors(r.errors || []); toast('صحّح الأخطاء أولاً · Fix the errors first', true); }
+  }).catch(fail);
+}
+function reasonModal(title, actName) {
+  var reasons = ACS_EXCL_REASONS.map(function (r, i) { return '<label><input type="radio" name="xr" value="' + i + '"><span><span class="ar">' + esc(r.ar) + '</span><br><span class="en">' + esc(r.v) + '</span></span></label>'; }).join('');
+  modal('<h3>' + title + '</h3><div class="rlist">' + reasons + '</div><div class="acts"><button class="btn alt" data-act="closem">' + bi('إلغاء', 'Cancel') + '</button><button class="btn danger" data-act="' + actName + '">' + bi('تأكيد الاستبعاد', 'Confirm exclusion') + '</button></div>');
+}
+function pickedReason() {
+  var r = document.querySelector('input[name="xr"]:checked');
+  if (!r) { toast('اختر السبب · Choose a reason', true); return null; }
+  return ACS_EXCL_REASONS[Number(r.value)].v;
+}
+function statusAct(action, extra) {
+  var F = S.form;
+  api(action, Object.assign({ hospital: F.hosp, code: F.code }, extra || {})).then(function () {
+    closeModal(); S.list = null; toast('تم · Done ✓'); openRecord(F.code);
+  }).catch(fail);
+}
+/* ---------- autosave of drafts (keeps what the collector already entered) ---------- */
+function markDirty() {
+  var F = S.form; if (!F) return;
+  F.dirty = true; F.ver = (F.ver || 0) + 1;
+  if (F.irr || F.ro || F.status !== 'Draft') return;
+  clearTimeout(F.asTimer);
+  F.asTimer = setTimeout(function () { autoSave(F); }, 2500);
+}
+function setAutosaveNote(txt, bad) {
+  var el = $('autosv'); if (!el) return;
+  el.textContent = txt; el.style.color = bad ? 'var(--red)' : 'var(--muted)';
+}
+function autoSave(f) {
+  var F = f || S.form;
+  if (!F || F.irr || F.ro || F.status !== 'Draft' || !F.dirty || F.saving) return;
+  var pre = acsValidate(F.vals, { mode: 'draft', year: F.year }), bad = {};
+  pre.errors.forEach(function (e) { bad[e.k] = 1; });
+  var vals = {}; Object.keys(F.vals).forEach(function (k) { vals[k] = bad[k] ? '' : F.vals[k]; });
+  var ver = F.ver, secs = F.secs; F.saving = true;
+  api('save', { hospital: F.hosp, code: F.code, year: F.year, mode: 'draft', values: vals, ack: false, secs: secs }).then(function (r) {
+    F.saving = false;
+    if (!r.saved) { setAutosaveNote('تعذّر الحفظ التلقائي · autosave failed', true); return; }
+    S.list = null; F.total = (F.total || 0) + secs; F.secs = Math.max(0, F.secs - secs);
+    if (F.ver === ver) F.dirty = false; else { clearTimeout(F.asTimer); F.asTimer = setTimeout(function () { autoSave(F); }, 1500); }
+    var d = new Date(); setAutosaveNote('✓ حُفظ تلقائياً · autosaved ' + pad2(d.getHours()) + ':' + pad2(d.getMinutes()));
+  }).catch(function (e) { F.saving = false; setAutosaveNote('تعذّر الحفظ التلقائي · autosave failed' + (e && e.msg ? ' — ' + e.msg : ''), true); });
+}
+function resetModal() {
+  modal('<h3>' + bi('تصفير الإضبارة', 'Reset the chart') + '</h3><div class="err-box" style="margin-top:0">' +
+    bi('هل أنت متأكد من تصفير الإضبارة؟ سيُمسح كل ما أدخلته فيها ويرجع النموذج فارغاً. الكود يبقى كما هو ولا يمكن التراجع.', 'Are you sure you want to reset this chart? Everything entered will be erased and the form returns to empty. The code stays the same. This cannot be undone.') + '</div>' +
+    '<div class="acts"><button class="btn alt" data-act="closem">' + bi('إلغاء', 'Cancel') + '</button><button class="btn danger" data-act="reset-ok">' + bi('نعم، صفّر الإضبارة', 'Yes, reset the chart') + '</button></div>');
+}
+function doReset() {
+  var F = S.form; if (!F) return;
+  clearTimeout(F.asTimer); F.dirty = false;
+  api('reset', { hospital: F.hosp, code: F.code }).then(function () { closeModal(); S.list = null; toast('تم تصفير الإضبارة · Chart reset ✓'); openRecord(F.code); }).catch(function (e) { closeModal(); fail(e); });
+}
+function leaveForm() {
+  if (S.guideEdit && S.guideDirty && !confirm('توجد تعديلات غير محفوظة على الدليل. هل تريد المغادرة؟\nUnsaved guide edits. Leave anyway?')) return false;
+  if (S.form && S.form.dirty && S.form.status === 'Draft' && !S.form.ro && !S.form.irr) { clearTimeout(S.form.asTimer); autoSave(S.form); flushTime(); return true; }
+  if (S.form && S.form.dirty && !confirm('توجد تعديلات غير محفوظة. هل تريد المغادرة؟\nUnsaved changes. Leave anyway?')) return false;
+  flushTime();
+  return true;
+}
+
+/* ======================================================================
+   RELIABILITY (second rater)
+   ====================================================================== */
+function viewIrr() {
+  if (S.form && S.form.irr) { renderForm(); return; }
+  var hs = (S.boot && S.boot.hospitals) || [];
+  var sel = S.irrHosp || (hs[0] && hs[0].code);
+  S.irrHosp = sel;
+  $('view').innerHTML = '<h2>' + bi('المراجعة المستقلة (اتفاق المقيّمين)', 'Independent re-abstraction (inter-rater reliability)') + '</h2>' +
+    '<p class="muted">' + bi('بحسب البروتوكول يُراجَع 5–10% من الإضابير في كل مشفى بشكل مستقل من شخص ثانٍ. تظهر هنا الإضابير المسحوبة التي لم تُدخِلها أنت.', 'Per protocol 5–10% of charts per hospital are re-abstracted independently by a second person. Charts drawn for the sample that you did not enter appear here.') + '</p>' +
+    '<div class="card"><div class="row"><div class="grow"><label class="l bi">' + bi('المشفى', 'Hospital') + '</label><select id="ih">' + hs.map(function (h) { return '<option value="' + esc(h.code) + '"' + (h.code === sel ? ' selected' : '') + '>' + esc(h.name_ar) + ' · ' + esc(h.name_en) + '</option>'; }).join('') + '</select></div></div></div><div id="iq"><p class="muted">…</p></div>';
+  if (!sel) { $('iq').innerHTML = ''; return; }
+  swr('irrQueue', { hospital: sel }).then(function (q) {
+    S.irrQueue = q;
+    if (!$('iq')) return;
+    $('iq').innerHTML = q.length ? '<div class="tw"><table><thead><tr><th>' + bi('الكود', 'Code') + '</th><th>' + bi('الحالة', 'Status') + '</th></tr></thead><tbody>' + q.map(function (r) {
+      return '<tr class="clk" data-act="irropen" data-c="' + esc(r.patient_code) + '"><td class="code" style="font-size:.95rem">' + esc(r.patient_code) + '</td><td>' + (r.done ? '<span class="pill v">تم · done</span>' : '<span class="pill d">بانتظارك · to do</span>') + '</td></tr>';
+    }).join('') + '</tbody></table></div>' : '<div class="card muted">' + bi('لا توجد إضابير بانتظار مراجعتك في هذا المشفى.', 'No charts are waiting for your re-abstraction in this hospital.') + '</div>';
+  }).catch(fail);
+}
+function openIrr(code) {
+  vapi('irrGet', { code: code }).then(function (prev) {
+    var vals = emptyVals();
+    IRR_KEYS_C.forEach(function (k) { var x = prev[k]; x = (x === undefined || x === 'NA') ? '' : String(x); if (ACS_FIELD_MAP[k].t === 'dt' && x) x = x.replace(' ', 'T'); vals[k] = x; });
+    S.form = { hosp: S.irrHosp, code: code, status: 'Submitted', year: ACS_DEFAULT_YEAR, vals: vals, errs: {}, dirty: false, ro: false, irr: true, flags: '', secs: 0, total: 0 };
+    renderForm();
+  }).catch(fail);
+}
+function saveIrr() {
+  var F = S.form, pre = acsValidate(F.vals, { mode: 'submit', only: IRR_KEYS_C });
+  if (pre.errors.length) { setErrors(pre.errors); toast('صحّح الأخطاء أولاً · Fix the errors first', true); return; }
+  api('irrSave', { hospital: F.hosp, code: F.code, values: F.vals, secs: F.secs }).then(function (r) {
+    if (r.saved) { toast('حُفظ التقييم · Rating saved ✓'); S.form = null; viewIrr(); } else setErrors(r.errors || []);
+  }).catch(fail);
+}
+
+/* ======================================================================
+   DASHBOARD
+   ====================================================================== */
+function viewDash() {
+  $('view').innerHTML = '<h2>' + bi('لوحة المتابعة والجودة', 'Progress & quality dashboard') + '</h2><p class="muted">…</p>';
+  swr('dashboard').then(function (d) {
+    S.dash = d; var T = d.totals;
+    var pct = Math.min(100, Math.round(T.analyzed * 100 / d.minSample));
+    var h = '<h2>' + bi('لوحة المتابعة والجودة', 'Progress & quality dashboard') + '</h2>' +
+      '<div class="card"><div class="bi"><span class="ar">التقدم نحو الحد الأدنى للعينة</span><span class="en">Progress toward minimum sample</span></div><div class="sp"></div>' +
+      '<div class="pbar"><i style="width:' + pct + '%"></i></div><div class="bi" style="margin-top:6px"><span><b dir="ltr">' + T.analyzed + ' / ' + d.minSample + '</b> ' + 'سجل مُسلَّم' + '</span><span class="en">submitted records · target is a minimum, no upper limit</span></div></div>' +
+      '<div class="card"><h3>' + bi('مخطط STROBE (تدفق المشاركين)', 'STROBE participant flow') + '</h3><div class="flow">' +
+      fbox('k', T.screened, 'إضابير مفروزة', 'Charts screened') + fbox('x', T.screenExcluded, 'مستبعدة عند الفرز', 'Excluded at screening') + fbox('k', T.entered, 'أُدخلت للتسجيل', 'Entered') +
+      fbox('x', T.excludedLater, 'مستبعدة بعد الإدخال', 'Excluded after entry') + fbox('k', T.analyzed, 'مُسلَّمة / متحقَّقة', 'Submitted / verified') + fbox('g', T.primary, 'ضمن تحليل التأخر', 'In delay analysis') + '</div>' +
+      '<p class="muted" style="margin-bottom:0">' + T.draft + ' ' + bi('مسودة لم تُسلَّم بعد', 'drafts not yet submitted') + '</p></div>' +
+      '<div class="card"><h3>' + bi('تنبيهات', 'Alerts') + '</h3>' + d.alerts.map(function (a) { return '<div class="al ' + a.level + '">' + esc(a.ar) + '<br><span class="en">' + esc(a.en) + '</span></div>'; }).join('') + '</div>' +
+      '<div class="card"><h3>' + bi('حسب المشفى', 'By hospital') + '</h3><div class="tw"><table><thead><tr><th>' + bi('المشفى', 'Hospital') + '</th><th class="num">' + bi('مفروزة', 'Screened') + '</th><th class="num">' + bi('مستبعدة', 'Excl.') + '</th><th class="num">' + bi('مسودة', 'Draft') + '</th><th class="num">' + bi('مُسلَّمة', 'Submitted') + '</th><th class="num">' + bi('متحقَّقة', 'Verified') + '</th><th class="num">' + bi('تحليل التأخر', 'Delay set') + '</th><th class="num">&gt;12h</th><th class="num">≤12h</th><th class="num">' + bi('مكتملة', 'Complete') + '</th><th class="num">' + bi('غير مكتملة', 'Incomplete') + '</th><th class="num">' + bi('مكتملة للانحدار ١', 'CC Reg.1') + '</th><th class="num">' + bi('مكتملة للانحدار ٢', 'CC Reg.2') + '</th><th class="num">' + bi('فقدان LVEF', 'LVEF NR') + '</th></tr></thead><tbody>' +
+      d.hospitals.map(function (r) { return '<tr><td class="wrap"><span class="ar">' + esc(r.name_ar) + '</span> <span class="en">' + esc(r.code) + (r.active ? '' : ' (inactive)') + '</span></td><td class="num">' + r.screened + '</td><td class="num">' + (r.screenExcluded + r.excludedLater) + '</td><td class="num">' + r.draft + '</td><td class="num">' + r.submitted + '</td><td class="num">' + r.verified + '</td><td class="num">' + r.primary + '</td><td class="num">' + r.delayed + '</td><td class="num">' + r.early + '</td><td class="num">' + r.complete + '</td><td class="num">' + r.incomplete + '</td><td class="num">' + r.m1 + '</td><td class="num">' + r.m2 + '</td><td class="num">' + fmtPct(r.lvefNrPct) + '</td></tr>'; }).join('') + '</tbody></table></div></div>';
+    if (d.time) {
+      h += '<div class="card"><h3>' + bi('وقت الإدخال الفعلي لكل شخص', 'Active entry time per person') + '</h3><p class="muted" style="margin-top:0">' + bi('يُحسب الوقت الذي كان فيه النموذج مفتوحاً مع نشاط فعلي؛ فترات الخمول (أكثر من ٩٠ ثانية) والتبويب المخفي لا تُحسب.', 'Time with the form open and real activity; idle periods (over 90 s) and hidden tabs are not counted.') + '</p>' +
+        (d.time.length ? '<div class="tw"><table><thead><tr><th>' + bi('المستخدم', 'User') + '</th><th>' + bi('الدور', 'Role') + '</th><th class="num">' + bi('إضابير', 'Records') + '</th><th class="num">' + bi('إجمالي وقت الإدخال', 'Total entry time') + '</th><th class="num">' + bi('متوسط/إضبارة', 'Avg / record') + '</th><th class="num">' + bi('وقت المراجعة المستقلة', 'IRR time') + '</th><th>' + bi('آخر نشاط', 'Last activity') + '</th><th>' + bi('آخر مزامنة أوفلاين', 'Last offline sync') + '</th></tr></thead><tbody>' +
+        d.time.map(function (t) { return '<tr><td>' + esc(t.name) + ' <span class="en">' + esc(t.user) + '</span></td><td>' + esc(t.role) + '</td><td class="num">' + t.records + '</td><td class="num" dir="ltr">' + fmtDur(t.entrySecs) + '</td><td class="num" dir="ltr">' + (t.avgSecs === null ? '—' : Math.floor(t.avgSecs / 60) + ' min ' + pad2(t.avgSecs % 60) + ' s') + '</td><td class="num" dir="ltr">' + (t.irrSecs ? fmtDur(t.irrSecs) : '—') + '</td><td dir="ltr">' + esc(t.last) + '</td><td dir="ltr">' + (esc(t.lastOfflineSync) || '—') + '</td></tr>'; }).join('') + '</tbody></table></div>' : '<span class="muted">—</span>') + '</div>';
+    }
+    var rs = Object.keys(d.reasons).sort();
+    h += '<div class="card"><h3>' + bi('أسباب الاستبعاد', 'Exclusion reasons') + '</h3>' + (rs.length ? '<div class="tw"><table><thead><tr><th>' + bi('السبب', 'Reason') + '</th>' + d.hospitals.map(function (x) { return '<th class="num">' + esc(x.code) + '</th>'; }).join('') + '<th class="num">' + bi('المجموع', 'Total') + '</th></tr></thead><tbody>' +
+      rs.map(function (r) { return '<tr><td class="wrap">' + esc(r) + '</td>' + d.hospitals.map(function (x) { return '<td class="num">' + (x.reasons[r] || '') + '</td>'; }).join('') + '<td class="num"><b>' + d.reasons[r] + '</b></td></tr>'; }).join('') + '</tbody></table></div>' : '<span class="muted">—</span>') + '</div>';
+    h += '<div class="card"><h3>' + bi('كفاية المتغيرات (EPV)', 'Events per variable (EPV)') + '</h3><p style="margin:4px 0"><b>' + 'الانحدار ٢ · Regression 2 (MAHCE):' + '</b> <b dir="ltr">' + d.epv.m2.minority + ' / ' + d.epv.m2.df + ' ≈ ' + d.epv.m2.epv + '</b></p><p style="margin:4px 0"><b>' + 'الانحدار ١ · Regression 1 (delay):' + '</b> <b dir="ltr">' + d.epv.minority + ' / ' + d.epv.df + ' ≈ ' + (d.epv.epv === null ? '—' : d.epv.epv) + '</b> — ' + bi('الحالات في الفئة الأقل ÷ عدد المعاملات التقريبي (بعد دمج الفئات، المشافي = تأثير ثابت)', 'minority-outcome count ÷ approximate parameters (collapsed categories, hospital as fixed effect). Target ≥10, else Firth.') + '</p></div>';
+    h += '<div class="card"><h3>' + bi('نسبة NR لكل متغير (للتحليل الكامل Complete-case)', 'NR proportion per variable (complete-case table)') + '</h3><div class="tw"><table><thead><tr><th>' + bi('المتغير', 'Variable') + '</th><th class="num">n</th><th class="num">NR</th><th class="num">%</th>' + d.hospitals.map(function (x) { return '<th class="num">' + esc(x.code) + '</th>'; }).join('') + '</tr></thead><tbody>' +
+      d.missing.map(function (m) { return '<tr><td class="wrap">' + esc(m.ar) + ' <span class="en">' + esc(m.k) + '</span></td><td class="num">' + m.n + '</td><td class="num">' + m.nr + '</td><td class="num ' + heat(m.pct) + '">' + fmtPct(m.pct) + '</td>' + d.hospitals.map(function (x) { var p = m.byHosp[x.code]; return '<td class="num ' + heat(p) + '">' + (p === null ? '' : p + '%') + '</td>'; }).join('') + '</tr>'; }).join('') + '</tbody></table></div></div>';
+    h += '<div class="card"><h3>' + bi('اتفاق المقيّمين (Kappa / ICC)', 'Inter-rater agreement (Kappa / ICC)') + '</h3><p class="muted" style="margin-top:0">' + bi('تقدير أولي للمتابعة؛ يُحسب الاعتماد النهائي مع فترات الثقة من التصدير «irr_pairs».', 'Monitoring estimate only; compute final values with CIs from the “irr_pairs” export.') + '</p><div class="tw"><table><thead><tr><th>' + bi('المتغير', 'Variable') + '</th><th>' + bi('النوع', 'Type') + '</th><th class="num">n</th><th class="num">% agree</th><th class="num">κ / ICC</th></tr></thead><tbody>' +
+      d.irr.map(function (r) { return '<tr><td class="wrap">' + esc(r.ar) + ' <span class="en">' + esc(r.k) + '</span></td><td>' + (r.type === 'categorical' ? 'κ' : 'ICC(2,1)') + '</td><td class="num">' + r.n + '</td><td class="num">' + (r.agree === null ? '' : Math.round(r.agree * 100) + '%') + '</td><td class="num">' + (r.stat === null ? '—' : (Math.round(r.stat * 100) / 100)) + '</td></tr>'; }).join('') + '</tbody></table></div></div>';
+    $('view').innerHTML = h;
+  }).catch(fail);
+}
+function fbox(cls, n, ar, en) { return '<div class="fbox ' + cls + '"><div class="n">' + n + '</div><div class="ar">' + esc(ar) + '</div><div class="en">' + esc(en) + '</div></div>'; }
+function heat(p) { return p === null || p === undefined ? '' : p > 40 ? 'heat3' : p > 20 ? 'heat2' : p > 5 ? 'heat1' : 'heat0'; }
+
+/* ======================================================================
+   EXPORT
+   ====================================================================== */
+function viewExport() {
+  swr('bootstrap').then(function (b) {
+    S.boot = b;
+    var hs = b.hospitals;
+    var kinds = [
+      ['labelled', 'بيانات التحليل — بالنصوص', 'Analysis dataset — labelled (text values; NR/NA kept)'],
+      ['coded', 'بيانات التحليل — مرمّزة رقمياً', 'Analysis dataset — numeric coded (Yes=1, No=0; NR/NA blank) — ready for R / SPSS / Stata'],
+      ['public', 'نسخة مجهّلة للمشاركة العامة', 'De-identified shareable version — no dates, no patient code (for journal data-availability statements)'],
+      ['dictionary', 'قاموس البيانات', 'Data dictionary — every variable, codes, calculation rules'],
+      ['strobe', 'أعداد STROBE', 'STROBE counts per hospital and exclusion reason'],
+      ['missing', 'جدول البيانات المفقودة', 'Missing-data table (NR % per variable and hospital)'],
+      ['irr_pairs', 'أزواج اتفاق المقيّمين', 'Paired rater 1 / rater 2 values for Kappa and ICC with CIs'],
+      ['xlsx_v5', 'ملف Excel بنفس أعمدة v5 — ممتلئ بالبيانات', 'Excel workbook with the same columns as the v5 data-entry template (SES removed) filled with data, plus analysis-ready columns on the right'],
+      ['descriptives', 'جدول الخصائص الوصفية (Table 1)', 'Descriptive table: overall, delayed vs early (n %, mean SD, median IQR, missing)'],
+      ['analysis_R', 'سكربت R جاهز للتحليل', 'R starter script: factor labels, analysis sets, Regression 1 & 2 (Firth if EPV<10), sensitivity analyses, IRR'],
+      ['centers', 'خصائص المراكز', 'Center characteristics (PCI capability, troponin assay, echo) + counts'],
+      ['manifest', 'بصمة البيانات (Manifest + SHA-256)', 'Export manifest with counts, lock time and SHA-256 checksums — cite when the dataset is frozen']
+    ];
+    if (isAdmin()) kinds.push(['timelog', 'سجل وقت الإدخال (إداري)', 'Entry-time log per user and record (admin only)']);
+    $('view').innerHTML = '<h2>' + bi('تصدير البيانات', 'Export data') + '</h2>' +
+      '<div class="card"><div class="row"><div class="grow"><label class="l bi">' + bi('المشفى', 'Hospital') + '</label><select id="eh"><option value="ALL">كل المشافي (مجمّع) · All hospitals (pooled)</option>' + hs.map(function (h) { return '<option value="' + esc(h.code) + '">' + esc(h.name_ar) + ' · ' + esc(h.name_en) + '</option>'; }).join('') + '</select></div>' +
+      '<label class="nrchk" style="min-height:42px"><input type="checkbox" id="ev"> ' + bi('المتحقَّق منها فقط', 'Verified only') + '</label></div>' +
+      '<p class="muted" style="margin-bottom:0">' + bi('يشمل التصدير السجلات المُسلَّمة والمتحقَّق منها فقط. تُجمَّع المشافي في ملف واحد مع عمود hospital_code (تأثير ثابت في النموذج).', 'Exports contain Submitted + Verified records only. Hospitals are pooled with a hospital_code column (fixed effect in the models).') + '</p></div>' +
+      '<div class="tw"><table><tbody>' + kinds.map(function (k) { return '<tr><td class="wrap"><span class="ar">' + k[1] + '</span><br><span class="en">' + k[2] + '</span></td><td><button class="btn small" data-act="dl" data-k="' + k[0] + '">' + bi('تنزيل CSV', 'Download CSV') + '</button></td></tr>'; }).join('') + '</tbody></table></div>';
+  }).catch(fail);
+}
+
+/* ======================================================================
+   XLSX WRITER (no libraries): builds the v5-format workbook in the browser
+   ====================================================================== */
+var XLSX_MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+function xesc(s) { return String(s).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+function xcol(n) { var s = ''; while (n > 0) { var m = (n - 1) % 26; s = String.fromCharCode(65 + m) + s; n = Math.floor((n - 1) / 26); } return s; }
+function xcell(col, row, v, st) {
+  var ref = xcol(col) + row;
+  if (v === '' || v === null || v === undefined) return '<c r="' + ref + '" s="' + st + '"/>';
+  if (typeof v === 'number' && isFinite(v)) return '<c r="' + ref + '" s="' + st + '"><v>' + v + '</v></c>';
+  return '<c r="' + ref + '" s="' + st + '" t="inlineStr"><is><t xml:space="preserve">' + xesc(v) + '</t></is></c>';
+}
+var XL_NS = 'xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"';
+function xlStyles() {
+  var font = function (b, sz, rgb) { return '<font>' + (b ? '<b/>' : '') + '<sz val="' + sz + '"/>' + (rgb ? '<color rgb="FF' + rgb + '"/>' : '') + '<name val="Calibri"/></font>'; };
+  var fill = function (rgb) { return '<fill><patternFill patternType="solid"><fgColor rgb="FF' + rgb + '"/><bgColor indexed="64"/></patternFill></fill>'; };
+  var xf = function (fo, fi, bo, al) { return '<xf numFmtId="0" fontId="' + fo + '" fillId="' + fi + '" borderId="' + bo + '" xfId="0" applyFont="1" applyFill="1" applyBorder="1"' + (al ? ' applyAlignment="1">' + al + '</xf>' : '/>'); };
+  return '<' + '?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet ' + XL_NS + '>' +
+    '<fonts count="5">' + font(false, 10) + font(true, 12, 'FFFFFF') + font(true, 10, '0F5C56') + font(true, 9, '000000') + font(false, 10, '000000') + '</fonts>' +
+    '<fills count="7"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill>' + fill('0F5C56') + fill('DCE8E6') + fill('FFFFFF') + fill('FFF2CC') + fill('E2EFDA') + '</fills>' +
+    '<borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border><border><left style="thin"><color rgb="FFBFBFBF"/></left><right style="thin"><color rgb="FFBFBFBF"/></right><top style="thin"><color rgb="FFBFBFBF"/></top><bottom style="thin"><color rgb="FFBFBFBF"/></bottom><diagonal/></border></borders>' +
+    '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>' +
+    '<cellXfs count="10">' +
+    xf(0, 0, 0) +
+    xf(1, 2, 0, '<alignment horizontal="left" vertical="center"/>') +
+    xf(2, 3, 1, '<alignment horizontal="center" vertical="center"/>') +
+    xf(3, 4, 1, '<alignment horizontal="center" vertical="center" wrapText="1"/>') +
+    xf(3, 5, 1, '<alignment horizontal="center" vertical="center" wrapText="1"/>') +
+    xf(3, 6, 1, '<alignment horizontal="center" vertical="center" wrapText="1"/>') +
+    xf(4, 0, 1, '<alignment horizontal="left" vertical="center"/>') +
+    xf(3, 3, 1, '<alignment horizontal="left" vertical="center"/>') +
+    xf(4, 0, 1, '<alignment horizontal="left" vertical="top" wrapText="1"/>') +
+    xf(3, 0, 0, '<alignment horizontal="left" vertical="top"/>') +
+    '</cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>';
+}
+function xlDataSheet(spec) {
+  var cols = spec.cols, n = cols.length, rows = spec.rows, last = Math.max(4, rows.length + 3), x = [];
+  x.push('<' + '?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet ' + XL_NS + '><sheetViews><sheetView workbookViewId="0"><pane xSplit="2" ySplit="3" topLeftCell="C4" activePane="bottomRight" state="frozen"/><selection pane="topRight"/><selection pane="bottomLeft"/><selection pane="bottomRight" activeCell="C4" sqref="C4"/></sheetView></sheetViews><sheetFormatPr defaultRowHeight="15"/>');
+  x.push('<cols>' + cols.map(function (c, i) { return '<col min="' + (i + 1) + '" max="' + (i + 1) + '" width="' + (c.w || 12) + '" customWidth="1"/>'; }).join('') + '</cols><sheetData>');
+  x.push('<row r="1" ht="27.75" customHeight="1">' + xcell(1, 1, spec.title, 1) + '</row>');
+  var r2 = [], secAt = {};
+  spec.sections.forEach(function (s) { secAt[s.from] = s; });
+  for (var i = 1; i <= n; i++) {
+    var sec = null; spec.sections.forEach(function (s) { if (i >= s.from && i <= s.to) sec = s; });
+    r2.push(xcell(i, 2, secAt[i] ? secAt[i].label : '', 2));
+  }
+  x.push('<row r="2" ht="19.5" customHeight="1">' + r2.join('') + '</row>');
+  x.push('<row r="3" ht="39.75" customHeight="1">' + cols.map(function (c, i) { return xcell(i + 1, 3, c.h, c.fill === 'FFF2CC' ? 4 : c.fill === 'E2EFDA' ? 5 : 3); }).join('') + '</row>');
+  rows.forEach(function (row, ri) { x.push('<row r="' + (ri + 4) + '">' + row.map(function (v, ci) { return xcell(ci + 1, ri + 4, v, 6); }).join('') + '</row>'); });
+  x.push('</sheetData>');
+  var merges = ['A1:' + xcol(n) + '1'];
+  spec.sections.forEach(function (s) { if (s.to > s.from) merges.push(xcol(s.from) + '2:' + xcol(s.to) + '2'); });
+  x.push('<mergeCells count="' + merges.length + '">' + merges.map(function (m) { return '<mergeCell ref="' + m + '"/>'; }).join('') + '</mergeCells>');
+  var dvs = Object.keys(spec.lists || {});
+  if (dvs.length) {
+    x.push('<dataValidations count="' + dvs.length + '">' + dvs.map(function (k) {
+      var L = xcol(Number(k));
+      return '<dataValidation type="list" allowBlank="1" showErrorMessage="1" sqref="' + L + '4:' + L + last + '"><formula1>"' + xesc(spec.lists[k].join(',')) + '"</formula1></dataValidation>';
+    }).join('') + '</dataValidations>');
+  }
+  x.push('</worksheet>');
+  return x.join('');
+}
+function xlTableSheet(rows, widths, headerStyle) {
+  var x = ['<' + '?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet ' + XL_NS + '><sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews><sheetFormatPr defaultRowHeight="15"/><cols>' +
+    widths.map(function (w, i) { return '<col min="' + (i + 1) + '" max="' + (i + 1) + '" width="' + w + '" customWidth="1"/>'; }).join('') + '</cols><sheetData>'];
+  rows.forEach(function (row, ri) { x.push('<row r="' + (ri + 1) + '">' + row.map(function (v, ci) { return xcell(ci + 1, ri + 1, v, ri === 0 && headerStyle ? 7 : (ci === 0 && !headerStyle ? 9 : 8)); }).join('') + '</row>'); });
+  x.push('</sheetData></worksheet>');
+  return x.join('');
+}
+var CRC_T = null;
+function crc32(u8) {
+  if (!CRC_T) { CRC_T = []; for (var n = 0; n < 256; n++) { var c = n; for (var k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; CRC_T[n] = c >>> 0; } }
+  var crc = 0xFFFFFFFF;
+  for (var i = 0; i < u8.length; i++) crc = CRC_T[(crc ^ u8[i]) & 0xFF] ^ (crc >>> 8);
+  return (crc ^ 0xFFFFFFFF) >>> 0;
+}
+function zipStore(files) {
+  var enc = new TextEncoder(), chunks = [], central = [], offset = 0;
+  function u16(v) { return [v & 255, (v >>> 8) & 255]; }
+  function u32(v) { return [v & 255, (v >>> 8) & 255, (v >>> 16) & 255, (v >>> 24) & 255]; }
+  files.forEach(function (f) {
+    var name = enc.encode(f.name), data = enc.encode(f.text), crc = crc32(data);
+    var head = [].concat(u32(0x04034b50), u16(20), u16(0x0800), u16(0), u16(0), u16(0x21), u32(crc), u32(data.length), u32(data.length), u16(name.length), u16(0));
+    chunks.push(new Uint8Array(head), name, data);
+    central.push({ name: name, crc: crc, size: data.length, offset: offset });
+    offset += head.length + name.length + data.length;
+  });
+  var cdStart = offset, cdLen = 0;
+  central.forEach(function (e) {
+    var h = [].concat(u32(0x02014b50), u16(20), u16(20), u16(0x0800), u16(0), u16(0), u16(0x21), u32(e.crc), u32(e.size), u32(e.size), u16(e.name.length), u16(0), u16(0), u16(0), u16(0), u32(0), u32(e.offset));
+    chunks.push(new Uint8Array(h), e.name); cdLen += h.length + e.name.length;
+  });
+  chunks.push(new Uint8Array([].concat(u32(0x06054b50), u16(0), u16(0), u16(central.length), u16(central.length), u32(cdLen), u32(cdStart), u16(0))));
+  var total = 0; chunks.forEach(function (ch) { total += ch.length; });
+  var out = new Uint8Array(total), pos = 0; chunks.forEach(function (ch) { out.set(ch, pos); pos += ch.length; });
+  return out;
+}
+function buildXlsx(spec) {
+  var hdr = '<' + '?xml version="1.0" encoding="UTF-8" standalone="yes"?>';
+  var files = [
+    { name: '[Content_Types].xml', text: hdr + '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/worksheets/sheet2.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/worksheets/sheet3.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>' },
+    { name: '_rels/.rels', text: hdr + '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>' },
+    { name: 'xl/workbook.xml', text: hdr + '<workbook ' + XL_NS + ' xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="Data Entry" sheetId="1" r:id="rId1"/><sheet name="Reference &amp; Definitions" sheetId="2" r:id="rId2"/><sheet name="Export Info" sheetId="3" r:id="rId3"/></sheets></workbook>' },
+    { name: 'xl/_rels/workbook.xml.rels', text: hdr + '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet2.xml"/><Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet3.xml"/><Relationship Id="rId4" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>' },
+    { name: 'xl/styles.xml', text: xlStyles() },
+    { name: 'xl/worksheets/sheet1.xml', text: xlDataSheet(spec) },
+    { name: 'xl/worksheets/sheet2.xml', text: xlTableSheet(spec.ref, [44, 70, 70], true) },
+    { name: 'xl/worksheets/sheet3.xml', text: xlTableSheet(spec.info, [26, 90], false) }
+  ];
+  return zipStore(files);
+}
+function downloadBytes(name, bytes, mime) {
+  try {
+    var blob = new Blob([bytes], { type: mime });
+    var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 800);
+  } catch (e) { toast('المتصفح منع التنزيل · Download blocked by the browser', true); }
+}
+
+function download(name, csv, plain) {
+  try {
+    var blob = new Blob([csv], { type: plain ? 'text/plain;charset=utf-8' : 'text/csv;charset=utf-8' });
+    var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 800);
+  } catch (e) {
+    modal('<h3>' + esc(name) + '</h3><p class="muted">' + bi('المتصفح منع التنزيل — انسخ النص والصقه في ملف .csv', 'Your browser blocked the download — copy the text into a .csv file.') + '</p><textarea style="min-height:240px" dir="ltr" readonly>' + esc(csv) + '</textarea><div class="acts"><button class="btn alt" data-act="closem">' + bi('إغلاق', 'Close') + '</button></div>');
+  }
+}
+
+/* ======================================================================
+   ADMIN
+   ====================================================================== */
+function viewAdmin() {
+  var subs = [['users', 'المستخدمون · Users'], ['hosp', 'المشافي · Hospitals'], ['set', 'الإعدادات · Settings'], ['irr', 'عينة IRR · IRR sample'], ['audit', 'سجل التدقيق · Audit log']];
+  $('view').innerHTML = '<h2>' + bi('الإدارة', 'Administration') + '</h2><div class="tabs2">' + subs.map(function (s) { return '<button data-act="asub" data-s="' + s[0] + '" class="' + (S.adminSub === s[0] ? 'on' : '') + '">' + s[1] + '</button>'; }).join('') + '</div><div id="asub"></div>';
+  adminSub();
+}
+function adminSub() {
+  var el = $('asub'), s = S.adminSub;
+  if (s === 'users') {
+    swr('users').then(function (us) {
+      el.innerHTML = '<div class="card"><h3>' + bi('إضافة / تعديل مستخدم', 'Add / edit user') + '</h3><div class="row">' +
+        '<div class="grow"><label class="l">Username</label><input id="un" type="text" dir="ltr" autocapitalize="none"></div>' +
+        '<div class="grow"><label class="l bi">' + bi('الاسم', 'Display name') + '</label><input id="udn" type="text"></div>' +
+        '<div><label class="l bi">' + bi('الدور', 'Role') + '</label><select id="ur"><option>Collector</option><option>Statistician</option><option>Admin</option></select></div>' +
+        '<div class="grow"><label class="l bi">' + bi('المشافي (رموز مفصولة بفاصلة أو ALL)', 'Hospitals (codes, comma-separated, or ALL)') + '</label><input id="uh" type="text" dir="ltr" placeholder="MUJ,HOM"></div>' +
+        '<label class="nrchk" style="min-height:42px"><input type="checkbox" id="ua" checked> ' + bi('فعّال', 'Active') + '</label>' +
+        '<button class="btn" data-act="saveuser">' + bi('حفظ', 'Save') + '</button></div><div id="ures"></div></div>' +
+        '<div class="tw"><table><thead><tr><th>User</th><th>' + bi('الاسم', 'Name') + '</th><th>' + bi('الدور', 'Role') + '</th><th>' + bi('المشافي', 'Hospitals') + '</th><th>' + bi('فعّال', 'Active') + '</th><th>' + bi('آخر دخول', 'Last login') + '</th><th></th></tr></thead><tbody>' +
+        us.map(function (u) { return '<tr><td dir="ltr">' + esc(u.username) + '</td><td>' + esc(u.display_name) + '</td><td>' + esc(u.role) + '</td><td dir="ltr">' + esc(u.hospitals) + '</td><td>' + (u.active ? '✓' : '—') + '</td><td dir="ltr">' + esc(u.last_login) + '</td><td><button class="btn alt small" data-act="uedit" data-u="' + esc(u.username) + '" data-n="' + esc(u.display_name) + '" data-r="' + esc(u.role) + '" data-h="' + esc(u.hospitals) + '" data-a="' + (u.active ? 1 : 0) + '">' + bi('تعديل', 'Edit') + '</button> <button class="btn danger small" data-act="upw" data-u="' + esc(u.username) + '">' + bi('إعادة كلمة المرور', 'Reset password') + '</button></td></tr>'; }).join('') + '</tbody></table></div>';
+    }).catch(fail);
+  } else if (s === 'hosp') {
+    swr('hospitalsAll').then(function (hs) {
+      el.innerHTML = '<div class="card"><h3>' + bi('إضافة / تعديل مشفى', 'Add / edit hospital') + '</h3><div class="row">' +
+        '<div><label class="l">Code (2–5 A–Z)</label><input id="hc" type="text" dir="ltr" style="width:110px" maxlength="5"></div>' +
+        '<div class="grow"><label class="l">English name</label><input id="hn" type="text" dir="ltr"></div>' +
+        '<div class="grow"><label class="l">الاسم بالعربي</label><input id="ha" type="text"></div>' +
+        '<div><label class="l bi">' + bi('المدينة', 'City') + '</label><input id="hct" type="text" dir="ltr"></div>' +
+        '<div><label class="l bi">' + bi('المحافظة', 'Governorate') + '</label><input id="hg" type="text" dir="ltr"></div>' +
+        '<div class="grow"><label class="l bi">' + bi('ملاحظة', 'Note') + '</label><input id="hno" type="text"></div>' +
+        '<div><label class="l bi">' + bi('الترتيب', 'Order') + '</label><input id="hs" type="text" dir="ltr" style="width:70px" inputmode="numeric"></div>' +
+        '<div><label class="l bi">' + bi('قثطرة تاجية', 'PCI capability') + '</label><select id="hp"><option value=""></option><option>Yes - 24/7</option><option>Yes - limited hours</option><option>No</option><option>NR</option></select></div>' +
+        '<div><label class="l bi">' + bi('حلّ خثرة', 'Thrombolysis') + '</label><select id="ht"><option value=""></option><option>Yes</option><option>No</option><option>NR</option></select></div>' +
+        '<div><label class="l bi">' + bi('نوع التروبونين', 'Troponin assay') + '</label><select id="hta"><option value=""></option><option>hs-cTnI</option><option>hs-cTnT</option><option>Conventional cTn</option><option>Qualitative / point-of-care</option><option>Mixed</option><option>NR</option></select></div>' +
+        '<div><label class="l bi">' + bi('إيكو متوفر', 'Echo available') + '</label><select id="he"><option value=""></option><option>Yes</option><option>No</option><option>NR</option></select></div>' +
+        '<label class="nrchk" style="min-height:42px"><input type="checkbox" id="hac" checked> ' + bi('فعّال', 'Active') + '</label>' +
+        '<button class="btn" data-act="savehosp">' + bi('حفظ', 'Save') + '</button></div></div>' +
+        '<div class="tw"><table><thead><tr><th>Code</th><th>' + bi('الاسم', 'Name') + '</th><th>' + bi('المدينة', 'City') + '</th><th>' + bi('فعّال', 'Active') + '</th><th>' + bi('ملاحظة', 'Note') + '</th><th></th></tr></thead><tbody>' +
+        hs.map(function (h) { return '<tr><td dir="ltr"><b>' + esc(h.code) + '</b></td><td class="wrap">' + esc(h.name_ar) + '<br><span class="en">' + esc(h.name_en) + '</span></td><td>' + esc(h.city) + '</td><td>' + (h.active ? '✓' : '—') + '</td><td class="wrap">' + esc(h.note) + '</td><td><button class="btn alt small" data-act="hedit" data-c="' + esc(h.code) + '" data-n="' + esc(h.name_en) + '" data-a="' + esc(h.name_ar) + '" data-ct="' + esc(h.city) + '" data-g="' + esc(h.governorate) + '" data-no="' + esc(h.note) + '" data-s="' + h.sort + '" data-ac="' + (h.active ? 1 : 0) + '" data-pci="' + esc(h.pci_capable) + '" data-th="' + esc(h.thrombolysis) + '" data-ta="' + esc(h.troponin_assay) + '" data-ec="' + esc(h.echo_available) + '">' + bi('تعديل', 'Edit') + '</button></td></tr>'; }).join('') + '</tbody></table></div>';
+    }).catch(fail);
+  } else if (s === 'set') {
+    var c = S.boot.config;
+    el.innerHTML = '<div class="card"><h3>' + bi('إعدادات الدراسة', 'Study settings') + '</h3><div class="row">' +
+      '<div><label class="l bi">' + bi('الحد الأدنى للعينة', 'Minimum sample') + '</label><input id="cs" type="text" dir="ltr" inputmode="numeric" value="' + esc(c.min_sample) + '"></div>' +
+      '<div><label class="l bi">' + bi('نسبة عينة IRR %', 'IRR sample %') + '</label><input id="ci" type="text" dir="ltr" inputmode="numeric" value="' + esc(c.irr_pct) + '"></div>' +
+      '<div class="grow"><label class="l bi">' + bi('جهة التواصل (تظهر في الدليل)', 'Contact (shown in the guide)') + '</label><input id="cc" type="text" value="' + esc(c.contact) + '"></div>' +
+      '<div><label class="l bi">' + bi('تنبيه المزامنة بعد (ساعات)', 'Sync warning after (hours)') + '</label><input id="cw" type="text" dir="ltr" inputmode="numeric" value="' + esc(c.sync_warn_hours) + '"></div>' +
+      '<div><label class="l bi">' + bi('منع إضبارة جديدة بعد (ساعات، 0=إيقاف)', 'Block new charts after (hours, 0=off)') + '</label><input id="cb" type="text" dir="ltr" inputmode="numeric" value="' + esc(c.sync_block_hours) + '"></div>' +
+      '<div><label class="l bi">' + bi('أو عند تراكم (إضابير، 0=إيقاف)', 'Or when pending reaches (charts, 0=off)') + '</label><input id="cn" type="text" dir="ltr" inputmode="numeric" value="' + esc(c.sync_block_pending) + '"></div>' +
+      '<button class="btn" data-act="savecfg">' + bi('حفظ', 'Save') + '</button></div></div>' +
+      '<div class="card"><h3>' + bi('قفل قاعدة البيانات للتحليل', 'Lock the database for analysis') + '</h3><p class="muted" style="margin-top:0">' + bi('بعد انتهاء الجمع والتحقق: يمنع أي إدخال أو تعديل، ويُسجَّل وقت القفل في بصمة البيانات المصدّرة. يمكن فتح القفل ويُسجَّل ذلك في سجل التدقيق.', 'After collection and verification: blocks every entry or edit, and the lock time is recorded in the export manifest. Unlocking is possible and is audit-logged.') + '</p>' +
+      (c.locked_at ? '<div class="warn-box">' + bi('مقفلة منذ ' + c.locked_at, 'Locked since ' + c.locked_at) + '</div><button class="btn alt" data-act="lockdb" data-v="0">' + bi('فتح القفل', 'Unlock') + '</button>' : '<button class="btn danger" data-act="lockdb" data-v="1">' + bi('قفل القاعدة الآن', 'Lock now') + '</button>') + '</div>' +
+      '<div class="card"><h3>' + bi('نسخة احتياطية', 'Backup') + '</h3><p class="muted">' + bi('تنسخ الجدول كاملاً إلى مجلد ACS_Backups في Drive (تُحفظ آخر ٣٠ نسخة).', 'Copies the whole spreadsheet to the Drive folder ACS_Backups (last 30 kept).') + '</p><button class="btn alt" data-act="backup">' + bi('نسخ احتياطي الآن', 'Back up now') + '</button></div>';
+  } else if (s === 'irr') {
+    el.innerHTML = '<div class="card"><h3>' + bi('سحب عينة اتفاق المقيّمين', 'Draw the reliability sample') + '</h3><p class="muted">' + bi('يسحب عشوائياً نسبة من السجلات المُسلَّمة في كل مشفى (5–30%)، ثم يراجعها مُدخِل آخر بشكل أعمى. كرّر السحب مع زيادة العينة؛ ما سُحب سابقاً يبقى.', 'Randomly selects a share of submitted records per hospital (5–30%); a different collector then re-abstracts them blind. Re-run as the sample grows; earlier picks are kept.') + '</p>' +
+      '<div class="row"><div><label class="l bi">' + bi('النسبة %', 'Percent') + '</label><input id="ip" type="text" dir="ltr" inputmode="numeric" value="' + esc(S.boot.config.irr_pct) + '" style="width:90px"></div><button class="btn" data-act="genirr">' + bi('سحب العينة', 'Draw sample') + '</button></div><div id="ires"></div>' +
+      '<p class="muted">' + bi('ملاحظة البروتوكول: جرّب النموذج على ٢٠–٣٠ إضبارة قبل بدء الجمع الكامل.', 'Protocol note: pilot the form on 20–30 charts before full-scale collection.') + '</p></div>';
+  } else {
+    el.innerHTML = '<p class="muted">…</p>';
+    swr('audit', { limit: 300 }).then(function (a) {
+      el.innerHTML = '<div class="tw"><table><thead><tr><th>Time</th><th>User</th><th>Action</th><th>Hosp.</th><th>Code</th><th>Detail</th></tr></thead><tbody>' + a.map(function (r) { return '<tr><td dir="ltr">' + esc(r.timestamp) + '</td><td>' + esc(r.user) + '</td><td>' + esc(r.action) + '</td><td>' + esc(r.hospital_code) + '</td><td dir="ltr">' + esc(r.patient_code) + '</td><td class="wrap" dir="ltr" style="max-width:420px">' + esc(r.detail) + '</td></tr>'; }).join('') + '</tbody></table></div>';
+    }).catch(fail);
+  }
+}
+function showTemp(title, name, pw) {
+  modal('<h3>' + esc(title) + '</h3><p>' + bi('سلّم هذه البيانات للمستخدم بشكل آمن. تظهر مرة واحدة فقط.', 'Hand these to the user securely. Shown only once.') + '</p><div class="card code" style="font-size:1rem;direction:ltr">Username: ' + esc(name) + '<br>Temporary password: ' + esc(pw) + '</div><div class="acts"><button class="btn" data-act="closem">' + bi('تم', 'Done') + '</button></div>');
+}
+
+/* ======================================================================
+   GUIDE (bilingual explanation page)
+   ====================================================================== */
+/* ---------- editable guide (Admin) ---------- */
+var G_TAGS = 'H1 H2 H3 H4 P DIV SPAN B STRONG I EM U BR HR UL OL LI A TABLE THEAD TBODY TR TH TD SMALL SUB SUP BLOCKQUOTE'.split(' ');
+var G_DROP = 'SCRIPT STYLE IFRAME OBJECT EMBED LINK META FORM INPUT BUTTON TEXTAREA SELECT SVG MATH IMG VIDEO AUDIO'.split(' ');
+function sanitizeGuide(html) {
+  var doc = new DOMParser().parseFromString('<body>' + String(html || '') + '</body>', 'text/html');
+  (function walk(node) {
+    Array.prototype.slice.call(node.childNodes).forEach(function (c) {
+      if (c.nodeType === 8) { node.removeChild(c); return; }
+      if (c.nodeType !== 1) return;
+      if (G_DROP.indexOf(c.tagName) >= 0) { node.removeChild(c); return; }
+      walk(c);
+      if (G_TAGS.indexOf(c.tagName) < 0) { while (c.firstChild) node.insertBefore(c.firstChild, c); node.removeChild(c); return; }
+      Array.prototype.slice.call(c.attributes).forEach(function (a) {
+        var n = a.name.toLowerCase();
+        if (n === 'class' || n === 'dir' || n === 'colspan' || n === 'rowspan') return;
+        if (n === 'href' && c.tagName === 'A' && /^(https?:|mailto:)/i.test(a.value.trim())) return;
+        c.removeAttribute(a.name);
+      });
+      if (c.tagName === 'A') { c.setAttribute('target', '_blank'); c.setAttribute('rel', 'noopener noreferrer'); }
+    });
+  })(doc.body);
+  return doc.body.innerHTML;
+}
+function guideTokens(html) {
+  var cfg = (S.boot && S.boot.config) || {};
+  var hs = ((S.boot && S.boot.hospitals) || []).map(function (h) { return esc(h.name_ar) + ' (' + esc(h.name_en) + ')'; }).join(' · ');
+  return html.replace(/<p>\s*\{\{calc_table\}\}\s*<\/p>|\{\{calc_table\}\}/g, function () { return calcTableHtml(); })
+    .replace(/\{\{hospitals\}\}/g, function () { return hs || '—'; })
+    .replace(/\{\{min_sample\}\}/g, function () { return esc(cfg.min_sample || 600); })
+    .replace(/\{\{contact\}\}/g, function () { return esc(cfg.contact || ''); });
+}
+function guideView() {
+  var cfg = (S.boot && S.boot.config) || {}, custom = cfg.guide_html;
+  var body = custom ? '<div class="guide">' + guideTokens(sanitizeGuide(custom)) + '</div>' : guideHtml();
+  var bar = (S.user && S.user.role === 'Admin' && !OFFLINE) ? '<div class="card" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><button class="btn" data-act="gedit">' + bi('تعديل الدليل', 'Edit guide') + '</button><span class="muted">' + (custom ? bi('الدليل معدَّل من الإدارة.', 'Customised by the admin.') : bi('الدليل الافتراضي.', 'Default guide.')) + '</span></div>' : '';
+  return bar + body;
+}
+function viewGuideEditor() {
+  var cfg = (S.boot && S.boot.config) || {};
+  var inner = cfg.guide_html ? sanitizeGuide(cfg.guide_html) : guideInner(true);
+  S.guideEdit = true; S.guideDirty = false;
+  function tb(cmd, v, label, title) { return '<button type="button" class="btn alt small" data-act="gfmt" data-cmd="' + cmd + '"' + (v ? ' data-v="' + v + '"' : '') + ' title="' + title + '">' + label + '</button>'; }
+  $('view').innerHTML = '<h2>' + bi('تعديل دليل الدراسة', 'Edit study guide') + '</h2>' +
+    '<div class="warn-box">' + bi('اكتب مباشرة داخل الدليل. الرموز {{hospitals}} و{{min_sample}} و{{contact}} و{{calc_table}} تُستبدل تلقائياً بالقيم الحالية؛ لا تحذفها إن أردت بقاء القيم محدّثة. كل مستخدم سيرى النسخة المحفوظة.', 'Type directly in the guide. The tokens {{hospitals}}, {{min_sample}}, {{contact}} and {{calc_table}} are replaced automatically with live values; keep them if you want those values to stay current. All users will see the saved version.') + '</div>' +
+    '<div class="gtool">' + tb('bold', '', '<b>B</b>', 'Bold') + tb('italic', '', '<i>I</i>', 'Italic') + tb('underline', '', '<u>U</u>', 'Underline') +
+    tb('formatBlock', 'H3', 'H3', 'Heading') + tb('formatBlock', 'P', '¶', 'Paragraph') + tb('insertUnorderedList', '', '• ' + '≡', 'Bulleted list') + tb('insertOrderedList', '', '1.', 'Numbered list') +
+    tb('createLink', '', '🔗', 'Link') + tb('removeFormat', '', 'Tx', 'Clear formatting') + tb('undo', '', '↶', 'Undo') + tb('redo', '', '↷', 'Redo') + '</div>' +
+    '<div class="guide gedit" id="gedit" contenteditable="true" spellcheck="false">' + inner + '</div>' +
+    '<div class="row" style="margin-top:12px"><button class="btn" data-act="gsave">' + bi('حفظ الدليل', 'Save guide') + '</button><button class="btn alt" data-act="gcancel">' + bi('إلغاء', 'Cancel') + '</button><button class="btn alt" data-act="greset">' + bi('استعادة الدليل الافتراضي', 'Restore default guide') + '</button></div>';
+  window.scrollTo(0, 0);
+}
+function pair(ar, en) { return '<div class="pair"><div>' + ar + '</div><div>' + en + '</div></div>'; }
+function calcTableHtml() {
+  var rows = ACS_FIELDS.filter(function (f) { return f.t === 'calc'; }).map(function (f) {
+    return '<tr><td class="wrap"><b>' + esc(f.ar) + '</b><br><span class="en">' + esc(f.en) + '</span></td><td class="wrap">' + esc(f.rule.ar) + '<br><span class="en">' + esc(f.rule.en) + '</span></td></tr>';
+  }).join('');
+  return '<div class="tw"><table><thead><tr><th>' + bi('المتغير', 'Variable') + '</th><th>' + bi('القاعدة', 'Rule') + '</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+}
+function guideInner(tokens) {
+  var cfg = (S.boot && S.boot.config) || {};
+  if (tokens) cfg = { min_sample: '{{min_sample}}', contact: '{{contact}}' };
+  var hs = ((S.boot && S.boot.hospitals) || []).map(function (h) { return esc(h.name_ar) + ' (' + esc(h.name_en) + ')'; }).join(' · ');
+  var calcRows = ACS_FIELDS.filter(function (f) { return f.t === 'calc'; }).map(function (f) {
+    return '<tr><td class="wrap"><b>' + esc(f.ar) + '</b><br><span class="en">' + esc(f.en) + '</span></td><td class="wrap">' + esc(f.rule.ar) + '<br><span class="en">' + esc(f.rule.en) + '</span></td></tr>';
+  }).join('');
+  var out = '<h2>' + bi('دليل الدراسة وجمع البيانات', 'Study & data-collection guide') + '</h2>' +
+    '<div class="card"><h3>' + bi('١. عن الدراسة', '1. About the study') + '</h3>' +
+    pair('<p><b>العنوان:</b> محددات التأخر قبل الوصول إلى المشفى لدى مرضى المتلازمة الإكليلية الحادة (ACS) وتأثيره على النتائج داخل المشفى في نظام صحي متأثر بالنزاع: دراسة أترابية سورية متعددة المراكز.</p><p><b>التصميم:</b> دراسة أترابية راجعة متعددة المراكز، مصدر البيانات الإضابير الطبية فقط (لا استبيان للمرضى).</p><p><b>الجامعة:</b> الجامعة الخاصة السورية (SPU) — دمشق.</p>',
+      '<p><b>Title:</b> Predictors and Prognostic Impact of Prehospital Delay Among Patients With Acute Coronary Syndrome in a Conflict-Affected Healthcare System: A Multicenter Syrian Cohort Study.</p><p><b>Design:</b> multicenter retrospective cohort; medical-record review only — no patient questionnaire.</p><p><b>Institution:</b> Syrian Private University (SPU), Damascus.</p>') +
+    pair('<p><b>الأهداف:</b> (١) تحديد محددات التأخر (>12 ساعة) لدى مرضى ACS في سوريا. (٢) تقييم تأثير التأخر على النتائج داخل المشفى (MAHCE). السياق (النزاع) خلفية وصفية وليس هدفاً رسمياً.</p><p><b>المراكز الحالية:</b> ' + (tokens ? '{{hospitals}}' : (hs || '—')) + '</p><p><b>حجم العينة:</b> حد أدنى <b>' + (cfg.min_sample || 600) + '</b> مريض في المجموع، بلا حد أعلى.</p><p><b>سنة الدخول:</b> من 2020 إلى 2026؛ المتوقع 2026 غالباً وقد تُستخدم 2025 احتياطاً.</p>',
+      '<p><b>Aims:</b> (1) identify predictors of prehospital delay (&gt;12 h) among ACS patients in Syria; (2) evaluate the prognostic impact of delay on in-hospital outcomes (MAHCE). The conflict context is descriptive background, not a formal aim.</p><p><b>Current centers:</b> see Arabic column.</p><p><b>Sample size:</b> minimum <b>' + (cfg.min_sample || 600) + '</b> patients overall, open upper limit.</p><p><b>Admission year:</b> 2020–2026; most likely 2026, with 2025 as backup.</p>') + '</div>' +
+    '<div class="card"><h3>' + bi('٢. التعريفات الأساسية', '2. Key definitions') + '</h3>' +
+    pair('<ul><li><b>التأخر:</b> أكثر من 12 ساعة بين بدء الأعراض والوصول إلى الإسعاف (S-to-D). 12 ساعة بالضبط = مبكر. يُحلَّل أيضاً كمتغير متصل.</li><li><b>ACS:</b> STEMI (ارتفاع ST + تروبونين إيجابي)، NSTEMI (دون ارتفاع ST + تروبونين إيجابي)، UA (تروبونين سلبي).</li><li><b>Killip:</b> I لا قصور · II خراخر أو S3 · III وذمة رئة · IV صدمة قلبية.</li><li><b>LVEF:</b> ≥50% محفوظة · 40–49% منخفضة قليلاً · &lt;40% منخفضة.</li><li><b>MAHCE (النقطة الأساسية):</b> نعم إذا حدث أي مما يلي: وفاة داخل المشفى، صدمة قلبية، VT/VF مستمر، قصور قلب حديث، عناية مركزة، أو LVEF &lt;40%.</li><li><b>NR:</b> غير مسجل في الإضبارة — <u>لا تخمّن ولا تقدّر أبداً</u>.</li></ul>',
+      '<ul><li><b>Delay:</b> &gt;12 h from symptom onset to ED arrival (S-to-D); exactly 12 h = early. Also analysed as continuous.</li><li><b>ACS:</b> STEMI (ST elevation + troponin+), NSTEMI (no ST elevation + troponin+), UA (troponin−).</li><li><b>Killip:</b> I no HF · II rales/S3 · III pulmonary edema · IV cardiogenic shock.</li><li><b>LVEF:</b> ≥50% preserved · 40–49% mildly reduced · &lt;40% reduced.</li><li><b>MAHCE (primary):</b> yes if any of in-hospital death, cardiogenic shock, sustained VT/VF, new heart failure, ICU admission, or LVEF &lt;40%.</li><li><b>NR:</b> not recorded in the chart — <u>never guess or estimate</u>.</li></ul>') + '</div>' +
+    '<div class="card"><h3>' + bi('٣. معايير الشمول والاستبعاد', '3. Eligibility') + '</h3>' +
+    pair('<p><b>الشمول:</b> بالغ ≥١٨ سنة · ACS مؤكد حسب ACC/AHA 2025 · دخول ضمن فترة الدراسة · وقت بدء الأعراض موثق (دقيق أو تقريبي).</p><p><b>الاستبعاد:</b> سجل ناقص (نوع ACS أو التوقيت أو النتائج) · محوَّل من مشفى آخر · فشل كلوي نهائي على الغسيل · ورم خبيث فعّال · قصور قلب NYHA IV سابق · احتشاء صامت مكتشف بالصدفة.</p>',
+      '<p><b>Include:</b> adult ≥18 · confirmed ACS (ACC/AHA 2025) · admitted in the study period · symptom-onset time documented (exact or approximate).</p><p><b>Exclude:</b> incomplete record (ACS type, timing or outcomes missing) · transferred from another hospital · ESRD on dialysis · active malignancy · pre-existing NYHA IV heart failure · silent MI found incidentally.</p>') + '</div>' +
+    '<div class="card"><h3>' + bi('٤. خطوات العمل', '4. How to collect') + '</h3>' +
+    pair('<ol><li>اختر <b>المشفى</b> أولاً (كل مشفى بياناته منفصلة)، ثم اختر <b>سنة الدخول</b>.</li><li>اضغط <b>إضبارة جديدة</b> وافرز الإضبارة: مؤهلة أم مستبعدة؟ الاستبعاد يُسجَّل بسببه فقط بلا بيانات سريرية.</li><li>للمؤهلة يُنشأ <b>كود</b> تلقائي (مثل MUJ-0001). دوّنه بجانب رقم الإضبارة في <u>سجلّك الورقي المحلي فقط</u>. (بوضع الأوفلاين يكون الكود <b>مؤقتاً</b> TMP-… فدوّنه أيضاً، وبعد المزامنة اكتب الكود الرسمي بجانبه.)</li><li>أدخل البيانات حسب الأقسام السبعة. استخدم <b>حفظ كمسودة</b> متى شئت، و<b>تسليم</b> عند الاكتمال.</li><li>التنبيهات الصفراء (مثل STEMI مع تروبونين سلبي) تحتاج تأكيدك بعد مراجعة الإضبارة؛ تُحفظ مع السجل.</li><li>المشرف يتحقق من السجلات ويقفلها (<b>Verified</b>). لا شيء يُحذف نهائياً؛ التعديلات مسجلة.</li></ol>',
+      '<ol><li>Choose the <b>hospital</b> first (each hospital has its own dataset), then the <b>admission year</b>.</li><li>Press <b>New chart</b> and screen it: eligible or excluded? Exclusions are logged with their reason only — no clinical data.</li><li>Eligible charts get an automatic <b>code</b> (e.g. MUJ-0001). Note it next to the file number in <u>your local paper log only</u>. (Offline the code is <b>temporary</b>, TMP-…: note it too, and after syncing write the official code beside it.)</li><li>Enter data section by section. <b>Save draft</b> any time; <b>Submit</b> when complete.</li><li>Yellow warnings (e.g. STEMI with negative troponin) need your confirmation after re-checking the chart; they are stored with the record.</li><li>The admin verifies and locks records (<b>Verified</b>). Nothing is permanently deleted; every change is logged.</li></ol>') + '</div>' +
+    '<div class="card"><h3>' + bi('٥. قواعد الإدخال', '5. Entry rules') + '</h3>' +
+    pair('<ul><li><b>الأرقام بالإنكليزية فقط (0-9).</b> إذا كتبت أرقاماً عربية تُحوَّل تلقائياً. الحسابات تعتمد عليها.</li><li>كل الحقول إلزامية: أدخل القيمة أو اختر <b>NR</b> إن لم تكن مسجلة. لا تترك فراغاً.</li><li>الحقول المرتبطة بشرط (مثل زمن البالون) تظهر وتختفي تلقائياً وتُخزَّن <b>N/A</b> إن لم تنطبق.</li><li>الوقت بنظام 24 ساعة كما في الإضبارة. إذا كان وقت البدء غير موثق اختر جودة التوثيق المناسبة؛ يُترك S-to-D فارغاً ويُستثنى السجل من تحليل التأخر.</li><li>لا تكتب أسماء أو أرقام هواتف أو أرقام هوية في الملاحظات — الموقع يرفضها.</li><li><b>الحفظ التلقائي:</b> المسودة تُحفظ تلقائياً أثناء الكتابة، فإذا تركتها وعدت لها لاحقاً تجد ما أدخلته؛ تكمل أو تضغط <b>تصفير الإضبارة</b> لتبدأ من الصفر (يطلب تأكيداً).</li><li><b>المعلومة غير الموجودة بالإضبارة لا تُعبَّأ ولا تُقدَّر:</b> سجّلها NR. يُصنِّف الموقع السجل تلقائياً «مكتمل» أو «غير مكتمل» (مع عدد وأسماء حقول NR).</li></ul>',
+      '<ul><li><b>English digits only (0-9).</b> Arabic digits are converted automatically; calculations depend on them.</li><li>Every field is required: enter the value or choose <b>NR</b> if not recorded. Never leave blanks.</li><li>Conditional fields (e.g. door-to-balloon) appear/disappear automatically and are stored as <b>N/A</b> when not applicable.</li><li>Use 24-hour time as in the chart. If onset time is not documented choose the right documentation quality; S-to-D stays empty and the record is left out of the delay analysis.</li><li>Never type names, phone numbers or ID numbers in notes — the site rejects them.</li><li><b>Autosave:</b> a draft is saved automatically while you type, so if you leave and come back later your entries are there; continue, or press <b>Reset chart</b> to start from zero (it asks for confirmation).</li><li><b>Information missing from the chart is never filled in or estimated:</b> record it as NR. The site automatically classifies the record as Complete or Incomplete (with the number and names of NR fields).</li></ul>') + '</div>' +
+    '<div class="card"><h3>' + bi('٦. المتغيرات المحسوبة تلقائياً', '6. Automatically calculated variables') + '</h3><div class="tw"><table><thead><tr><th>' + bi('المتغير', 'Variable') + '</th><th>' + bi('القاعدة', 'Rule') + '</th></tr></thead><tbody>' + calcRows + '</tbody></table></div></div>' +
+    '<div class="card"><h3>' + bi('٧. الخصوصية والجودة', '7. Privacy & quality') + '</h3>' +
+    pair('<ul><li>لا تُخزَّن أي معرّفات مباشرة: لا اسم، ولا تاريخ ميلاد، ولا رقم إضبارة، ولا هاتف. المريض يُعرَّف بكود فقط.</li><li>الاتصال مشفّر (HTTPS) والتخزين مشفّر لدى Google؛ الوصول بحسابات شخصية مع قفل بعد محاولات فاشلة، وتُسجَّل كل العمليات.</li><li>جمع متتابع (consecutive) لكل الإضابير المؤهلة لتقليل التحيز، مع مخطط STROBE تلقائي.</li><li>5–10% من الإضابير تُراجَع بشكل مستقل من مُدخِل ثانٍ (Kappa / ICC).</li><li>التصدير للمشاركة العامة مجهّل بلا تواريخ، تماشياً مع سياسات إتاحة البيانات في المجلات.</li><li>يُسجَّل وقت الإدخال الفعلي لكل مستخدم (دون محتوى ما كُتب) لمتابعة الجودة؛ وقت الخمول لا يُحسب.</li></ul>',
+      '<ul><li>No direct identifiers are stored — no name, date of birth, file number or phone. Patients are identified by code only.</li><li>Connection is encrypted (HTTPS) and storage is encrypted by Google; personal accounts, lock-out after failed attempts, and every action is logged.</li><li>Consecutive screening of all eligible charts to limit selection bias, with an automatic STROBE flow.</li><li>5–10% of charts are independently re-abstracted by a second collector (Kappa / ICC).</li><li>The public export is de-identified with no dates, in line with journal data-availability policies.</li><li>Active entry time is recorded per user (not what was typed) for quality monitoring; idle time is not counted.</li></ul>') +
+    (cfg.contact ? '<p><b>' + 'للتواصل · Contact:' + '</b> ' + esc(cfg.contact) + '</p>' : '') + '</div>';
+  if (tokens) out = out.replace(/<div class="tw"><table>[\s\S]*?<\/table><\/div>/, '<p>{{calc_table}}</p>');
+  return out;
+}
+function guideHtml() { return '<div class="guide">' + guideInner(false) + '</div>'; }
+
+/* ======================================================================
+   EVENT WIRING
+   ====================================================================== */
+document.addEventListener('click', function (ev) {
+  var an = ev.target.closest && ev.target.closest('a[href^="#"]');
+  if (an && !an.hasAttribute('data-act')) { ev.preventDefault(); var id = an.getAttribute('href').slice(1), tg = id && document.getElementById(id); if (tg) tg.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
+  var t = ev.target.closest('[data-act]'); if (!t) return;
+  var act = t.getAttribute('data-act');
+  if (act === 'sec') { ev.preventDefault(); var se = $('sec_' + t.getAttribute('data-s')); if (se) se.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
+  if (act === 'jump') { ev.preventDefault(); jumpTo(t.getAttribute('data-k')); return; }
+  switch (act) {
+    case 'login': doLogin(); break;
+    case 'pwshow': var pi = $('lp'); if (pi) pi.type = t.checked ? 'text' : 'password'; break;
+    case 'chpw': doChangePw(); break;
+    case 'logout': if (leaveForm()) doLogout(); break;
+    case 'lock': if (typeof offlineLock === 'function' && leaveForm()) offlineLock(); break;
+    case 'tab': if (leaveForm()) { S.form = null; showTab(t.getAttribute('data-t')); } break;
+    case 'pickh': S.hosp = t.getAttribute('data-h'); S.list = null; S.filter = 'all'; S.q = ''; saveSess(); recordList(); break;
+    case 'changeh': S.hosp = null; S.list = null; saveSess(); hospPicker(); break;
+    case 'filt': S.filter = t.getAttribute('data-s'); recordList(); break;
+    case 'newchart': if (OFFLINE && typeof syncBlocked === 'function' && syncBlocked()) { syncBlockModal(); break; } screenModal(); break;
+    case 'sc-inc': doScreen('Included'); break;
+    case 'sc-exc1': $('sc1').classList.add('hide'); $('sc2').classList.remove('hide'); break;
+    case 'sc-back': $('sc2').classList.add('hide'); $('sc1').classList.remove('hide'); break;
+    case 'sc-exc2': var rr = pickedReason(); if (rr) doScreen('Excluded', rr); break;
+    case 'closem': closeModal(); break;
+    case 'open': openRecord(t.getAttribute('data-c')); break;
+    case 'back': if (leaveForm()) { var wasIrr = S.form && S.form.irr; S.form = null; if (wasIrr) viewIrr(); else { recordList(); loadList().then(function () { if (S.tab === 'collect' && !S.form && S.hosp) recordList(); }).catch(function () { }); } } break;
+    case 'save-draft': collectNow('draft'); break;
+    case 'save-submit': collectNow('submit'); break;
+    case 'ackok': closeModal(); collectNow(t.getAttribute('data-mode'), true); break;
+    case 'reset': resetModal(); break;
+    case 'reset-ok': doReset(); break;
+    case 'excl': reasonModal(bi('استبعاد الإضبارة بعد الإدخال', 'Exclude this chart after entry'), 'excl-ok'); break;
+    case 'excl-ok': var er = pickedReason(); if (er) statusAct('exclude', { reason: er }); break;
+    case 'verify': statusAct('verify'); break;
+    case 'unlock': statusAct('unlock'); break;
+    case 'restore': statusAct('restore'); break;
+    case 'gedit': viewGuideEditor(); break;
+    case 'gfmt':
+      var gc = t.getAttribute('data-cmd'), gv = t.getAttribute('data-v') || null;
+      if (gc === 'createLink') { gv = prompt('URL (https://…)', 'https://'); if (!gv || !/^(https?:|mailto:)/i.test(gv)) break; }
+      if (gc === 'formatBlock' && gv) gv = '<' + gv + '>';
+      $('gedit').focus(); document.execCommand(gc, false, gv); S.guideDirty = true; break;
+    case 'gsave':
+      t.disabled = true;
+      api('saveGuide', { html: sanitizeGuide($('gedit').innerHTML) }).then(function (r) { S.boot.config.guide_html = r.guide_html; S.guideDirty = false; toast('تم حفظ الدليل · Guide saved ✓'); showTab('guide'); }).catch(function (e) { t.disabled = false; fail(e); });
+      break;
+    case 'greset': if (confirm('سيُحذف الدليل المعدَّل ويُستعاد الدليل الافتراضي. متأكد؟\nThis discards the customised guide and restores the default. Continue?')) api('saveGuide', { html: '' }).then(function (r) { S.boot.config.guide_html = ''; S.guideDirty = false; toast('تمت الاستعادة · Default restored ✓'); showTab('guide'); }).catch(fail); break;
+    case 'gcancel': if (!S.guideDirty || confirm('تجاهل التعديلات؟\nDiscard edits?')) showTab('guide'); break;
+    case 'irropen': openIrr(t.getAttribute('data-c')); break;
+    case 'irrsave': saveIrr(); break;
+    case 'dl':
+      t.disabled = true;
+      api('export', { kind: t.getAttribute('data-k'), hospital: $('eh').value, verifiedOnly: $('ev').checked })
+        .then(function (r) { if (r.spec) downloadBytes(r.filename, buildXlsx(r.spec), XLSX_MIME); else download(r.filename, r.csv, r.plain); toast('تم التجهيز · Ready: ' + esc(r.filename) + (r.sha256 ? '<br><span dir="ltr" style="font-size:.75rem">SHA-256 ' + esc(r.sha256.substring(0, 16)) + '…</span>' : '')); })
+        .catch(fail).then(function () { t.disabled = false; });
+      break;
+    case 'asub': S.adminSub = t.getAttribute('data-s'); viewAdmin(); break;
+    case 'uedit': $('un').value = t.getAttribute('data-u'); $('udn').value = t.getAttribute('data-n'); $('ur').value = t.getAttribute('data-r'); $('uh').value = t.getAttribute('data-h') === 'ALL' ? '' : t.getAttribute('data-h'); $('ua').checked = t.getAttribute('data-a') === '1'; window.scrollTo(0, 0); break;
+    case 'saveuser':
+      api('saveUser', { username: $('un').value, display_name: $('udn').value, role: $('ur').value, hospitals: $('uh').value || 'ALL', active: $('ua').checked })
+        .then(function (r) { if (r.tempPassword) showTemp('تم إنشاء المستخدم · User created', $('un').value.toLowerCase(), r.tempPassword); else toast('تم الحفظ · Saved ✓'); adminSub(); }).catch(fail);
+      break;
+    case 'upw': if (confirm('Reset password for ' + t.getAttribute('data-u') + '?')) api('resetPw', { username: t.getAttribute('data-u') }).then(function (r) { showTemp('كلمة مرور مؤقتة · Temporary password', t.getAttribute('data-u'), r.tempPassword); }).catch(fail); break;
+    case 'hedit': $('hc').value = t.getAttribute('data-c'); $('hn').value = t.getAttribute('data-n'); $('ha').value = t.getAttribute('data-a'); $('hct').value = t.getAttribute('data-ct'); $('hg').value = t.getAttribute('data-g'); $('hno').value = t.getAttribute('data-no'); $('hs').value = t.getAttribute('data-s'); $('hac').checked = t.getAttribute('data-ac') === '1'; $('hp').value = t.getAttribute('data-pci'); $('ht').value = t.getAttribute('data-th'); $('hta').value = t.getAttribute('data-ta'); $('he').value = t.getAttribute('data-ec'); window.scrollTo(0, 0); break;
+    case 'savehosp':
+      api('saveHospital', { code: $('hc').value, name_en: $('hn').value, name_ar: $('ha').value, city: $('hct').value, governorate: $('hg').value, note: $('hno').value, sort: $('hs').value, active: $('hac').checked, pci_capable: $('hp').value, thrombolysis: $('ht').value, troponin_assay: $('hta').value, echo_available: $('he').value })
+        .then(function () { toast('تم الحفظ · Saved ✓'); return api('bootstrap').then(function (b) { S.boot = b; }); }).then(adminSub).catch(fail);
+      break;
+    case 'savecfg':
+      api('saveConfig', { min_sample: $('cs').value, irr_pct: $('ci').value, contact: $('cc').value, sync_warn_hours: $('cw').value, sync_block_hours: $('cb').value, sync_block_pending: $('cn').value }).then(function (c) { S.boot.config = c; toast('تم الحفظ · Saved ✓'); }).catch(fail);
+      break;
+    case 'lockdb':
+      if (t.getAttribute('data-v') === '1' && !confirm('قفل القاعدة يمنع أي إدخال أو تعديل. متأكد؟\nLocking blocks all entry and edits. Continue?')) break;
+      api('lockDb', { lock: t.getAttribute('data-v') === '1' }).then(function (r) { S.boot.config.locked_at = r.locked_at; toast('تم · Done ✓'); render(); }).catch(fail);
+      break;
+    case 'backup': t.disabled = true; api('backup').then(function (r) { toast('تم · Backup: ' + esc(r.name)); }).catch(fail).then(function () { t.disabled = false; }); break;
+    case 'genirr':
+      api('genIrr', { pct: $('ip').value }).then(function (r) {
+        $('ires').innerHTML = '<div class="ok-box">' + r.map(function (x) { return esc(x.hospital) + ': ' + x.selected + ' / ' + x.eligible; }).join(' · ') + '</div>';
+      }).catch(fail);
+      break;
+  }
+});
+document.addEventListener('input', function (ev) {
+  var el = ev.target;
+  if (el.id === 'gedit' || (el.closest && el.closest('#gedit'))) { S.guideDirty = true; return; }
+  if (el.id === 'q') { S.q = el.value; var pos = el.selectionStart; recordList(); var q2 = $('q'); if (q2) { q2.focus(); try { q2.setSelectionRange(pos, pos); } catch (e) { } } return; }
+  if (el.hasAttribute && el.hasAttribute('data-dt')) { onDtInput(el); return; }
+  if (el.hasAttribute && el.hasAttribute('data-k') && el.type !== 'radio') onFieldInput(el);
+});
+document.addEventListener('change', function (ev) {
+  var el = ev.target;
+  if (el.id === 'yr') { S.year = Number(el.value); saveSess(); return; }
+  if (el.hasAttribute && el.hasAttribute('data-dt')) { onDtInput(el); return; }
+  if (el.id === 'ih') { S.irrHosp = el.value; viewIrr(); return; }
+  if (el.hasAttribute && el.hasAttribute('data-nr')) {
+    var k = el.getAttribute('data-nr'), inp = $('f_' + k);
+    S.form.vals[k] = el.checked ? 'NR' : ''; markDirty(); clearErr(k);
+    inp.disabled = el.checked; if (el.checked) inp.value = ''; else inp.focus();
+    refreshForm(); return;
+  }
+  if (el.hasAttribute && el.hasAttribute('data-k') && (el.type === 'radio' || el.tagName === 'SELECT')) {
+    var kk = el.getAttribute('data-k'); S.form.vals[kk] = el.value; markDirty(); clearErr(kk); refreshForm();
+  }
+});
+document.addEventListener('mousedown', function (ev) { if (ev.target.closest && ev.target.closest('[data-act="gfmt"]')) ev.preventDefault(); });
+document.addEventListener('keydown', function (ev) {
+  if (ev.key === 'Enter' && (ev.target.id === 'lu' || ev.target.id === 'lp')) doLogin();
+  if (ev.key === 'Escape') closeModal();
+});
+['input', 'click', 'keydown', 'touchstart', 'change'].forEach(function (e) { document.addEventListener(e, function () { S.lastAct = Date.now(); }, true); });
+window.addEventListener('scroll', function () { S.lastAct = Date.now(); }, true);
+setInterval(function () {
+  var F = S.form;
+  if (!F || (F.ro && !F.irr) || document.visibilityState !== 'visible' || Date.now() - S.lastAct > 90000) return;
+  F.secs++;
+  var t = $('tmr'); if (t) t.textContent = timerText();
+}, 1000);
+window.addEventListener('beforeunload', function (e) { if ((S.form && S.form.dirty) || (S.guideEdit && S.guideDirty)) { e.preventDefault(); e.returnValue = ''; } });
+
+/* ======================================================================
+   ACS PORTAL — OFFLINE LAYER (PWA)
+   Reuses the exact same form engine (client.js) and logic (shared.js);
+   only the "server" is replaced by an encrypted on-device store.
+   ====================================================================== */
+var ACS_SERVER_URL_DEFAULT = '';
+var LB = { key: null, hasSetup: false, unlocked: false, boot: null, items: {}, counters: {}, synced: [], lastSync: '', url: '', srvToken: null, busy: false };
+var IDLE_LOCK_MS = 10 * 60 * 1000;
+
+/* ---------- small helpers ---------- */
+function b64e(u8) { var s = ''; for (var i = 0; i < u8.length; i++) s += String.fromCharCode(u8[i]); return btoa(s); }
+function b64d(b) { var s = atob(b), u = new Uint8Array(s.length); for (var i = 0; i < s.length; i++) u[i] = s.charCodeAt(i); return u; }
+function uuid4() {
+  if (crypto.randomUUID) return crypto.randomUUID();
+  var a = crypto.getRandomValues(new Uint8Array(16)), h = [];
+  for (var i = 0; i < 16; i++) h.push((a[i] + 256).toString(16).substring(1));
+  return h.slice(0, 4).join('') + '-' + h.slice(4, 6).join('') + '-' + h.slice(6, 8).join('') + '-' + h.slice(8, 10).join('') + '-' + h.slice(10).join('');
+}
+function lsGet(k) { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } }
+function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) { } }
+function nowStr() { var d = new Date(); return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()) + ' ' + pad2(d.getHours()) + ':' + pad2(d.getMinutes()) + ':' + pad2(d.getSeconds()); }
+
+/* ---------- IndexedDB ---------- */
+function idb() {
+  return new Promise(function (res, rej) {
+    var r = indexedDB.open('acs_offline', 1);
+    r.onupgradeneeded = function () { var d = r.result; d.createObjectStore('kv'); d.createObjectStore('items', { keyPath: 'uuid' }); };
+    r.onsuccess = function () { res(r.result); };
+    r.onerror = function () { rej(r.error); };
+  });
+}
+function idbOp(store, mode, fn) {
+  return idb().then(function (db) {
+    return new Promise(function (res, rej) {
+      var tx = db.transaction(store, mode), out = fn(tx.objectStore(store));
+      tx.oncomplete = function () { res(out && out.result); };
+      tx.onerror = function () { rej(tx.error); };
+      tx.onabort = function () { rej(tx.error); };
+    });
+  });
+}
+function kvGet(k) { return idbOp('kv', 'readonly', function (s) { return s.get(k); }); }
+function kvPut(k, v) { return idbOp('kv', 'readwrite', function (s) { return s.put(v, k); }); }
+function itemsAll() { return idbOp('items', 'readonly', function (s) { return s.getAll(); }); }
+function itemPutRaw(r) { return idbOp('items', 'readwrite', function (s) { return s.put(r); }); }
+function itemDel(id) { return idbOp('items', 'readwrite', function (s) { return s.delete(id); }); }
+
+/* ---------- AES-GCM with a passphrase-derived key ---------- */
+function deriveKey(pass, saltB64) {
+  var enc = new TextEncoder();
+  return crypto.subtle.importKey('raw', enc.encode(pass), 'PBKDF2', false, ['deriveKey']).then(function (base) {
+    return crypto.subtle.deriveKey({ name: 'PBKDF2', salt: b64d(saltB64), iterations: 200000, hash: 'SHA-256' }, base, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
+  });
+}
+function encJson(key, obj) {
+  var iv = crypto.getRandomValues(new Uint8Array(12));
+  return crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv }, key, new TextEncoder().encode(JSON.stringify(obj))).then(function (ct) {
+    return { iv: b64e(iv), ct: b64e(new Uint8Array(ct)) };
+  });
+}
+function decJson(key, rec) {
+  return crypto.subtle.decrypt({ name: 'AES-GCM', iv: b64d(rec.iv) }, key, b64d(rec.ct)).then(function (pt) { return JSON.parse(new TextDecoder().decode(pt)); });
+}
+function persistItem(it) { return encJson(LB.key, it).then(function (e) { return itemPutRaw({ uuid: it.uuid, iv: e.iv, ct: e.ct }); }); }
+function saveState() { return encJson(LB.key, { counters: LB.counters, synced: LB.synced, lastSync: LB.lastSync }).then(function (e) { return kvPut('state', e); }); }
+
+/* ---------- unlock / lock ---------- */
+function applyUnlocked() {
+  LB.unlocked = true; S.token = 'offline';
+  var u = LB.boot.user;
+  S.user = { username: u.username, name: u.name, role: 'Collector', hospitals: u.hospitals };
+  S.boot = { user: S.user, hospitals: [], config: LB.boot.config, years: LB.boot.years, defaultYear: LB.boot.defaultYear };
+  S.mustChange = false;
+}
+function offUnlock(pass) {
+  var salt, chk;
+  return kvGet('salt').then(function (s) { salt = s; return kvGet('check'); }).then(function (c) { chk = c; return deriveKey(pass, salt); })
+    .then(function (key) {
+      return decJson(key, chk).then(function () { LB.key = key; }, function () { throw new Error('bad'); });
+    })
+    .then(function () { return kvGet('boot'); }).then(function (b) { return decJson(LB.key, b); }).then(function (b) { LB.boot = b; return kvGet('state'); })
+    .then(function (st) { return st ? decJson(LB.key, st) : { counters: {}, synced: [], lastSync: '' }; })
+    .then(function (st) { LB.counters = st.counters || {}; LB.synced = st.synced || []; LB.lastSync = st.lastSync || ''; return itemsAll(); })
+    .then(function (rows) {
+      LB.items = {};
+      return rows.reduce(function (p, r) { return p.then(function () { return decJson(LB.key, r).then(function (it) { LB.items[it.uuid] = it; }); }); }, Promise.resolve());
+    }).then(applyUnlocked);
+}
+function localAutosave() {
+  var F = S.form;
+  if (!F || F.irr || F.ro || !F.dirty || !LB.unlocked) return Promise.resolve();
+  var it = findItem(F.hosp, F.code);
+  if (!it) return Promise.resolve();
+  var a = acsApply(F.vals);
+  it.vals = a; it.secs = (it.secs || 0) + (F.secs || 0); F.secs = 0; it.updatedAt = nowStr();
+  return persistItem(it);
+}
+function offlineLock() {
+  localAutosave().catch(function () { }).then(function () {
+    LB.key = null; LB.items = {}; LB.unlocked = false; LB.boot = null; LB.srvToken = null;
+    S.token = null; S.user = null; S.boot = null; S.form = null; S.hosp = null; S.list = null; S.mustChange = false;
+    render();
+  });
+}
+setInterval(function () { if (LB.unlocked && Date.now() - S.lastAct > IDLE_LOCK_MS) offlineLock(); }, 15000);
+
+/* ---------- login screens (override the online ones) ---------- */
+function unlockHtml(msg) {
+  return '<div class="login"><div class="card"><h2 style="margin-top:0">' + bi('فتح التطبيق', 'Unlock the app') + '</h2>' +
+    '<p class="muted" style="margin-top:-6px">' + bi('البيانات على هذا الجهاز مشفّرة. أدخل كلمة سر الجهاز.', 'Data on this device is encrypted. Enter the device passphrase.') + '</p>' +
+    (msg ? '<div class="err-box">' + esc(msg) + '</div>' : '') +
+    '<div class="fld"><label class="l">' + bi('كلمة سر الجهاز', 'Device passphrase') + '</label><input id="lp" type="password" dir="ltr" autocomplete="off"></div><div class="sp"></div>' +
+    '<button class="btn" style="width:100%" data-act="login" id="lbtn">' + bi('فتح', 'Unlock') + '</button></div></div>';
+}
+function setupHtml(msg) {
+  var url = LB.url || lsGet('acs_srv') || ACS_SERVER_URL_DEFAULT;
+  return '<div class="login" style="max-width:460px"><div class="card"><h2 style="margin-top:0">' + bi('التفعيل لأول مرة (يلزم إنترنت)', 'First-time activation (internet required)') + '</h2>' +
+    '<p class="muted" style="margin-top:-6px">' + bi('يُحمَّل المشافي المسموحة لك من البوابة، ثم يعمل التطبيق بدون إنترنت.', 'Your allowed hospitals are downloaded from the portal; after that the app works offline.') + '</p>' +
+    (msg ? '<div class="err-box">' + esc(msg) + '</div>' : '') +
+    '<div class="fld"><label class="l">' + bi('رابط البوابة (Web app URL)', 'Portal URL (web app)') + '</label><input id="su" type="text" dir="ltr" value="' + esc(url) + '" placeholder="https://script.google.com/macros/s/…/exec"></div><div class="sp"></div>' +
+    '<div class="fld"><label class="l">' + bi('اسم المستخدم', 'Username') + '</label><input id="lu" type="text" dir="ltr" autocapitalize="none" value="' + esc(lsGet('acs_user')) + '"></div><div class="sp"></div>' +
+    '<div class="fld"><label class="l">' + bi('كلمة مرور البوابة', 'Portal password') + '</label><input id="lp" type="password" dir="ltr" autocomplete="off"></div><div class="sp"></div>' +
+    '<div class="warn-box">' + bi('اختر الآن كلمة سر لهذا الجهاز (٨ أحرف على الأقل). تُشفَّر بها بياناتك المحلية ولا يمكن استعادتها إذا نسيتها.', 'Choose a passphrase for this device (min 8 characters). It encrypts your local data and cannot be recovered if forgotten.') + '</div>' +
+    '<div class="fld"><label class="l">' + bi('كلمة سر الجهاز', 'Device passphrase') + '</label><input id="sp1" type="password" dir="ltr" autocomplete="new-password"></div><div class="sp"></div>' +
+    '<div class="fld"><label class="l">' + bi('تأكيد كلمة سر الجهاز', 'Confirm passphrase') + '</label><input id="sp2" type="password" dir="ltr" autocomplete="new-password"></div><div class="sp"></div>' +
+    '<button class="btn" style="width:100%" data-act="login" id="lbtn">' + bi('تفعيل', 'Activate') + '</button></div></div>';
+}
+function loginHtml(msg) { return LB.hasSetup ? unlockHtml(msg) : setupHtml(msg); }
+function doLogin() {
+  var btn = $('lbtn'); if (btn) btn.disabled = true;
+  if (LB.hasSetup) {
+    var pass = $('lp').value;
+    if (!pass) { render('أدخل كلمة السر · Enter the passphrase'); return; }
+    offUnlock(pass).then(function () { S.lastAct = Date.now(); render(); }).catch(function () { render('كلمة السر غير صحيحة · Wrong passphrase'); });
+    return;
+  }
+  offSetup().catch(function (e) { render((e && (e.msg || e.message)) || 'Error'); });
+}
+function offSetup() {
+  var url = $('su').value.trim(), user = $('lu').value.trim(), pw = $('lp').value, p1 = $('sp1').value, p2 = $('sp2').value;
+  if (!/^https:\/\//.test(url)) return Promise.reject({ msg: 'الرابط يجب أن يبدأ بـ https:// · URL must start with https://' });
+  if (!user || !pw) return Promise.reject({ msg: 'أدخل اسم المستخدم وكلمة المرور · Enter username and password' });
+  if (p1.length < 8) return Promise.reject({ msg: 'كلمة سر الجهاز أقصر من ٨ أحرف · Passphrase shorter than 8 characters' });
+  if (p1 !== p2) return Promise.reject({ msg: 'كلمتا سر الجهاز غير متطابقتين · Passphrases do not match' });
+  if (!navigator.onLine) return Promise.reject({ msg: 'التفعيل يحتاج إنترنت · Activation needs internet' });
+  LB.url = url;
+  var boot, salt;
+  return srvPost('login', null, { username: user, password: pw }).then(function (r) {
+    if (r.mustChange) throw { msg: 'غيّر كلمة المرور المؤقتة من البوابة الإلكترونية أولاً · Change your temporary password on the web portal first' };
+    LB.srvToken = r.token;
+    return srvPost('bootstrap', r.token, {});
+  }).then(function (b) {
+    boot = { user: b.user, hospitals: b.hospitals.map(function (h) { return { code: h.code, name_en: h.name_en, name_ar: h.name_ar, city: h.city, note: h.note }; }), config: b.config, years: b.years, defaultYear: b.defaultYear, fetchedAt: nowStr() };
+    salt = b64e(crypto.getRandomValues(new Uint8Array(16)));
+    return deriveKey(p1, salt);
+  }).then(function (key) {
+    LB.key = key; LB.boot = boot;
+    return Promise.all([encJson(key, { ok: 1 }), encJson(key, boot)]);
+  }).then(function (e) {
+    return kvPut('salt', salt).then(function () { return kvPut('check', e[0]); }).then(function () { return kvPut('boot', e[1]); });
+  }).then(function () { lsSet('acs_srv', url); lsSet('acs_user', user); LB.counters = {}; LB.synced = []; LB.items = {}; LB.hasSetup = true; return saveState(); })
+    .then(function () { applyUnlocked(); S.lastAct = Date.now(); if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); render(); });
+}
+
+/* ---------- talking to the real portal (only used for activation + sync) ---------- */
+function srvPost(action, token, payload) {
+  var ctl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+  var to = setTimeout(function () { if (ctl) ctl.abort(); }, 60000);
+  return fetch(LB.url || lsGet('acs_srv'), { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: action, token: token, payload: payload || {} }), redirect: 'follow', signal: ctl ? ctl.signal : undefined })
+    .then(function (r) { clearTimeout(to); return r.json(); })
+    .then(function (j) { if (!j.ok) throw { code: j.code, msg: j.msg }; return j.data; })
+    .catch(function (e) { clearTimeout(to); if (e && e.code) throw e; throw { code: 'NET', msg: 'تعذّر الاتصال بالبوابة · Could not reach the portal' }; });
+}
+
+/* ---------- the local "backend": same actions the form UI already uses ---------- */
+function findItem(hosp, code) {
+  var ks = Object.keys(LB.items);
+  for (var i = 0; i < ks.length; i++) { var it = LB.items[ks[i]]; if (it.kind === 'record' && it.hospital === hosp && it.tempCode === code) return it; }
+  return null;
+}
+function lerr(code, msg) { return { code: code, msg: msg }; }
+function localDo(action, p) {
+  var it, ks;
+  switch (action) {
+    case 'bootstrap': {
+      var hs = LB.boot.hospitals.map(function (h) {
+        var c = { total: 0, Draft: 0, Submitted: 0, Verified: 0, Excluded: 0 };
+        Object.keys(LB.items).forEach(function (k) { var x = LB.items[k]; if (x.kind === 'record' && x.hospital === h.code) { c.total++; c[x.status] = (c[x.status] || 0) + 1; } });
+        return { code: h.code, name_en: h.name_en, name_ar: h.name_ar, city: h.city, note: h.note, counts: c };
+      });
+      S.boot.hospitals = hs;
+      return Promise.resolve({ user: S.user, hospitals: hs, config: LB.boot.config, years: LB.boot.years, defaultYear: LB.boot.defaultYear });
+    }
+    case 'screen': {
+      var h = LB.boot.hospitals.filter(function (x) { return x.code === p.hospital; })[0];
+      if (!h) return Promise.reject(lerr('FORBIDDEN', 'No access to this hospital.'));
+      if (ACS_YEARS.indexOf(Number(p.year)) < 0) return Promise.reject(lerr('BAD', 'Invalid year.'));
+      var base = { uuid: uuid4(), hospital: h.code, year: Number(p.year), createdAt: nowStr(), updatedAt: nowStr(), secs: 0, ack: false };
+      if (p.outcome === 'Included') {
+        var n = (LB.counters[h.code] || 0) + 1; LB.counters[h.code] = n;
+        it = Object.assign(base, { kind: 'record', tempCode: 'TMP-' + h.code + '-' + (n < 1000 ? ('000' + n).slice(-3) : String(n)), status: 'Draft', vals: {}, qc: '', exclReason: '' });
+        LB.items[it.uuid] = it;
+        return persistItem(it).then(saveState).then(function () { return { screen_id: it.uuid, patient_code: it.tempCode }; });
+      }
+      if (!ACS_EXCL_REASONS.some(function (r) { return r.v === p.reason; })) return Promise.reject(lerr('BAD', 'Choose an exclusion reason.'));
+      it = Object.assign(base, { kind: 'screenExcluded', reason: p.reason });
+      LB.items[it.uuid] = it;
+      return persistItem(it).then(function () { return { screen_id: it.uuid, patient_code: '' }; });
+    }
+    case 'records': {
+      var rows = [];
+      Object.keys(LB.items).forEach(function (k) {
+        var x = LB.items[k]; if (x.kind !== 'record' || x.hospital !== p.hospital) return;
+        var v = x.vals || {};
+        rows.push({ patient_code: x.tempCode, status: x.status, admission_date: v.admission_date || '', age_years: v.age_years || '', sex: v.sex || '', acs_type: v.acs_type || '', stod_hours: v.stod_hours === undefined ? '' : v.stod_hours, delayed_12h: v.delayed_12h || '', flags: x.qc ? x.qc.split(';').filter(String).length : 0, updated_at: x.updatedAt, irr: false, completeness: v.completeness || '', nr_count: v.nr_count === undefined ? '' : v.nr_count, _t: x.createdAt });
+      });
+      rows.sort(function (a, b) { return a._t < b._t ? 1 : -1; });
+      return Promise.resolve(rows);
+    }
+    case 'getRecord': {
+      it = findItem(p.hospital, p.code);
+      if (!it) return Promise.reject(lerr('NOT_FOUND', 'Record not found.'));
+      var o = {};
+      ACS_FIELDS.forEach(function (f) { if (f.t !== 'calc') o[f.k] = it.vals && it.vals[f.k] !== undefined ? it.vals[f.k] : ''; });
+      o.status = it.status; o.qc_flags = it.qc || ''; o.exclusion_reason = it.exclReason || ''; o.entry_seconds = it.secs || 0; o.patient_code = it.tempCode;
+      return Promise.resolve(o);
+    }
+    case 'save': {
+      it = findItem(p.hospital, p.code);
+      if (!it) return Promise.reject(lerr('NOT_FOUND', 'Record not found.'));
+      if (it.status === 'Excluded') return Promise.reject(lerr('LOCKED', 'This chart is excluded.'));
+      var mode = p.mode === 'submit' ? 'submit' : 'draft';
+      var res = acsValidate(p.values || {}, { mode: mode, year: Number(p.year) || null });
+      if (res.errors.length) return Promise.resolve({ saved: false, errors: res.errors, warnings: res.warnings });
+      if (mode === 'submit' && res.warnings.length && !p.ack) return Promise.resolve({ saved: false, needAck: true, warnings: res.warnings });
+      it.vals = res.values; it.qc = res.warnings.map(function (w) { return w.c; }).join(';');
+      if (mode === 'submit') it.status = 'Submitted';
+      if (p.ack || !res.warnings.length) it.ack = true;
+      it.secs = (it.secs || 0) + Math.max(0, Math.min(3600, Math.round(Number(p.secs) || 0)));
+      it.updatedAt = nowStr(); it.lastError = '';
+      return persistItem(it).then(function () { return { saved: true, status: it.status, warnings: res.warnings, completeness: res.values.completeness, nr_count: res.values.nr_count, nr_fields: res.values.nr_fields }; });
+    }
+    case 'exclude': {
+      it = findItem(p.hospital, p.code);
+      if (!it) return Promise.reject(lerr('NOT_FOUND', 'Record not found.'));
+      if (!ACS_EXCL_REASONS.some(function (r) { return r.v === p.reason; })) return Promise.reject(lerr('BAD', 'Choose an exclusion reason.'));
+      it.status = 'Excluded'; it.exclReason = p.reason; it.updatedAt = nowStr();
+      return persistItem(it).then(function () { return { status: 'Excluded' }; });
+    }
+    case 'reset': {
+      it = findItem(p.hospital, p.code);
+      if (!it) return Promise.reject(lerr('NOT_FOUND', 'Record not found.'));
+      if (it.status !== 'Draft') return Promise.reject(lerr('BAD_STATE', 'Only a Draft can be reset.'));
+      it.vals = {}; it.qc = ''; it.ack = false; it.lastError = ''; it.updatedAt = nowStr();
+      return persistItem(it).then(function () { return { reset: true }; });
+    }
+    case 'logTime': {
+      it = findItem(p.hospital, p.code);
+      if (it) { it.secs = (it.secs || 0) + Math.max(0, Math.min(3600, Math.round(Number(p.secs) || 0))); return persistItem(it).then(function () { return { logged: p.secs }; }); }
+      return Promise.resolve({ logged: 0 });
+    }
+    case 'irrQueue': return Promise.resolve([]);
+    case 'irrGet': return Promise.resolve({});
+    case 'logout': offlineLock(); return Promise.resolve(true);
+    default: return Promise.reject(lerr('OFFLINE', 'غير متاح بدون إنترنت · Not available offline'));
+  }
+}
+function localCall(action, token, p) {
+  if (!LB.unlocked && action !== 'logout') return Promise.resolve({ ok: false, code: 'AUTH', msg: 'التطبيق مقفل · App is locked' });
+  return Promise.resolve().then(function () { return localDo(action, p || {}); })
+    .then(function (d) { return { ok: true, data: d }; }, function (e) { return { ok: false, code: (e && e.code) || 'ERR', msg: (e && (e.msg || e.message)) || String(e) }; });
+}
+window.google = {
+  script: {
+    run: (function mk(ok, fail) {
+      return new Proxy({}, {
+        get: function (_, name) {
+          if (name === 'withSuccessHandler') return function (f) { return mk(f, fail); };
+          if (name === 'withFailureHandler') return function (f) { return mk(ok, f); };
+          return function (a, t, p) { localCall(a, t, p).then(function (r) { if (ok) ok(r); }, function (e) { if (fail) fail(e); }); };
+        }
+      });
+    })(null, null)
+  }
+};
+
+/* ---------- daily-sync discipline: banner + soft block on NEW charts ---------- */
+function syncCfg() {
+  var c = (LB.boot && LB.boot.config) || {};
+  return { warn: c.sync_warn_hours === undefined ? 24 : Number(c.sync_warn_hours), block: c.sync_block_hours === undefined ? 72 : Number(c.sync_block_hours), pending: c.sync_block_pending === undefined ? 100 : Number(c.sync_block_pending) };
+}
+function syncState() {
+  var items = pendingList(), cfg = syncCfg(), n = items.length, oldest = null;
+  items.forEach(function (x) { var t = new Date(String(x.createdAt).replace(' ', 'T')).getTime(); if (!isNaN(t) && (oldest === null || t < oldest)) oldest = t; });
+  var ageH = oldest === null ? 0 : (Date.now() - oldest) / 3600000;
+  var byAge = cfg.block > 0 && n > 0 && ageH >= cfg.block, byCount = cfg.pending > 0 && n >= cfg.pending;
+  return { n: n, ageH: ageH, warn: cfg.warn > 0 && n > 0 && ageH >= cfg.warn, block: byAge || byCount, byAge: byAge, byCount: byCount, cfg: cfg };
+}
+function syncBlocked() { return LB.unlocked && syncState().block; }
+function fmtAge(h) { return h < 1 ? 'أقل من ساعة · under 1 h' : h < 48 ? Math.floor(h) + ' ساعة · ' + Math.floor(h) + ' h' : Math.floor(h / 24) + ' يوم · ' + Math.floor(h / 24) + ' days'; }
+function updateSyncBanner() {
+  var el = $('syncbar'); if (!el) return;
+  if (!LB.unlocked) { el.innerHTML = ''; return; }
+  var st = syncState();
+  if (!st.n) { el.innerHTML = ''; return; }
+  var cls = st.block ? 'err-box' : st.warn ? 'warn-box' : 'ok-box';
+  var msg = st.block
+    ? bi('إضافة إضبارة جديدة موقوفة حتى تزامن (' + st.n + ' بانتظار الرفع، أقدمها منذ ' + fmtAge(st.ageH).split(' · ')[0] + ').', 'New charts are blocked until you sync (' + st.n + ' waiting, oldest ' + fmtAge(st.ageH).split(' · ')[1] + ').')
+    : st.warn
+      ? bi('زامن اليوم: ' + st.n + ' إضبارة بانتظار الرفع، أقدمها منذ ' + fmtAge(st.ageH).split(' · ')[0] + '.', 'Sync today: ' + st.n + ' waiting, oldest ' + fmtAge(st.ageH).split(' · ')[1] + '.')
+      : bi(st.n + ' إضبارة بانتظار المزامنة.', st.n + ' waiting to sync.');
+  el.innerHTML = '<div class="' + cls + '" style="margin:0;border-radius:0;display:flex;gap:10px;justify-content:space-between;align-items:center;flex-wrap:wrap"><div>' + msg + '</div>' +
+    '<button class="btn alt small" data-act="gosync">' + bi('إلى المزامنة', 'Go to Sync') + '</button></div>';
+}
+function syncBlockModal() {
+  var st = syncState(), online = navigator.onLine;
+  modal('<h3>' + bi('زامن أولاً', 'Sync first') + '</h3><div class="err-box" style="margin-top:0">' +
+    bi(st.byCount ? 'تراكم ' + st.n + ' إضبارة غير مرفوعة (الحد ' + st.cfg.pending + ').' : 'مرّ أكثر من ' + st.cfg.block + ' ساعة على أقدم إضبارة غير مرفوعة.', st.byCount ? st.n + ' charts are waiting (limit ' + st.cfg.pending + ').' : 'The oldest unsynced chart is older than ' + st.cfg.block + ' hours.') + '</div>' +
+    '<p class="muted">' + bi('السبب: الإضابير غير المرفوعة موجودة على هذا الجهاز فقط، وضياعه يعني ضياعها. يمكنك متابعة تعديل المسودات الحالية.', 'Why: unsynced charts exist on this device only — losing it means losing them. You can still edit existing drafts.') + '</p>' +
+    (online ? '' : '<div class="warn-box">' + bi('لا يوجد إنترنت الآن — أعد المحاولة عند توفره.', 'No internet right now — try again when you are online.') + '</div>') +
+    '<div class="acts"><button class="btn alt" data-act="closem">' + bi('إغلاق', 'Close') + '</button><button class="btn" data-act="gosync">' + bi('إلى المزامنة', 'Go to Sync') + '</button></div>');
+}
+
+/* ---------- sync tab ---------- */
+function pendingList() {
+  return Object.keys(LB.items).map(function (k) { return LB.items[k]; }).sort(function (a, b) { return a.createdAt < b.createdAt ? -1 : 1; });
+}
+function updateNet() { var n = $('net'); if (n) n.textContent = navigator.onLine ? 'متصل · online' : 'بدون إنترنت · offline'; }
+window.addEventListener('online', function () { updateNet(); });
+window.addEventListener('offline', function () { updateNet(); });
+setInterval(function () { updateNet(); updateSyncBanner(); }, 3000);
+
+function viewSync() {
+  var items = pendingList(), n = items.length, online = navigator.onLine;
+  var rec = items.filter(function (x) { return x.kind === 'record'; }), sx = items.filter(function (x) { return x.kind === 'screenExcluded'; });
+  var url = LB.url || lsGet('acs_srv');
+  $('view').innerHTML = '<h2>' + bi('المزامنة مع البوابة', 'Sync with the portal') + '</h2>' +
+    '<div class="card"><div class="flow">' + fbox('k', rec.length, 'إضابير بانتظار الرفع', 'Charts waiting') + fbox('x', sx.length, 'استبعاد عند الفرز بانتظار الرفع', 'Screen-exclusions waiting') +
+    fbox(online ? 'g' : 'x', online ? '✓' : '✗', online ? 'متصل بالإنترنت' : 'لا يوجد إنترنت', online ? 'Online' : 'Offline') + '</div>' +
+    '<p class="muted" style="margin:10px 0 0">' + (LB.lastSync ? bi('آخر مزامنة: ' + LB.lastSync, 'Last sync: ' + LB.lastSync) : bi('لم تتم مزامنة بعد.', 'No sync yet.')) + '</p></div>' +
+    '<div class="card"><h3>' + bi('رفع البيانات', 'Upload data') + '</h3><div id="sres"></div>' +
+    (LB.srvToken ? '' : '<div class="row"><div class="grow"><label class="l">' + bi('كلمة مرور البوابة (للمزامنة)', 'Portal password (for syncing)') + '</label><input id="spw" type="password" dir="ltr" autocomplete="off"></div></div><div class="sp"></div>') +
+    '<div class="row"><button class="btn" data-act="dosync" ' + (online && n ? '' : 'disabled') + '>' + bi('مزامنة الآن', 'Sync now') + '</button>' +
+    '<button class="btn alt" data-act="refreshh" ' + (online ? '' : 'disabled') + '>' + bi('تحديث قائمة المشافي', 'Refresh hospital list') + '</button></div>' +
+    '<p class="muted" style="margin-bottom:0">' + bi('بعد نجاح المزامنة تُحذف الإضبارة من هذا الجهاز ويظهر كودها الرسمي أدناه — دوّنه في سجلك الورقي.', 'After a successful sync the chart is removed from this device and its official code is listed below — write it in your paper log.') + '</p></div>' +
+    (n ? '<div class="tw"><table><thead><tr><th>' + bi('الكود المؤقت', 'Temp code') + '</th><th>' + bi('المشفى', 'Hospital') + '</th><th>' + bi('الحالة', 'Status') + '</th><th>' + bi('آخر تعديل', 'Updated') + '</th><th>' + bi('ملاحظة', 'Note') + '</th></tr></thead><tbody>' +
+      items.map(function (x) {
+        return '<tr><td class="code" style="font-size:.9rem">' + esc(x.kind === 'record' ? x.tempCode : 'screening') + '</td><td>' + esc(x.hospital) + '</td><td>' + (x.kind === 'record' ? '<span class="badge ' + x.status + '">' + x.status + '</span>' : '<span class="badge Excluded">Excluded at screening</span>') + '</td><td dir="ltr">' + esc(x.updatedAt) + '</td><td class="wrap" style="max-width:320px;color:var(--red)">' + esc(x.lastError || '') + '</td></tr>';
+      }).join('') + '</tbody></table></div>' : '<div class="card muted">' + bi('لا توجد بيانات بانتظار الرفع.', 'Nothing is waiting to be uploaded.') + '</div>') +
+    '<div class="card" style="margin-top:14px"><h3>' + bi('الأكواد الرسمية بعد المزامنة', 'Official codes after sync') + '</h3>' +
+    (LB.synced.length ? '<div class="tw"><table><thead><tr><th>' + bi('الكود المؤقت', 'Temp code') + '</th><th>' + bi('الكود الرسمي', 'Official code') + '</th><th>' + bi('المشفى', 'Hospital') + '</th><th>' + bi('التاريخ', 'Date') + '</th></tr></thead><tbody>' +
+      LB.synced.slice().reverse().map(function (m) { return '<tr><td class="code" style="font-size:.9rem">' + esc(m.temp) + '</td><td class="code" style="font-size:.9rem"><b>' + esc(m.code) + '</b></td><td>' + esc(m.hospital) + '</td><td dir="ltr">' + esc(m.at) + '</td></tr>'; }).join('') + '</tbody></table></div><div class="sp"></div><button class="btn alt small" data-act="clearmap">' + bi('مسحت الأكواد من هنا (دوّنتها)', 'Clear this list (I have noted the codes)') + '</button>' : '<span class="muted">—</span>') +
+    '</div><p class="muted" style="font-size:.8rem;direction:ltr">Portal: ' + esc(url || '—') + '</p>';
+  updateNet(); updateSyncBanner();
+}
+function itemPayload(it) {
+  if (it.kind === 'screenExcluded') return { uuid: it.uuid, hospital: it.hospital, year: it.year, outcome: 'Excluded', reason: it.reason, savedAt: it.updatedAt };
+  return { uuid: it.uuid, hospital: it.hospital, year: it.year, outcome: 'Included', mode: it.status === 'Submitted' ? 'submit' : 'draft', values: it.vals || {}, ack: !!it.ack, secs: it.secs || 0, savedAt: it.updatedAt, finalStatus: it.status === 'Excluded' ? 'Excluded' : '', excludeReason: it.exclReason || '' };
+}
+function errSummary(r) {
+  if (r.needAck) return 'تحتاج تأكيد التنبيهات · needs warning confirmation — open the portal online';
+  var es = (r.errors || []).slice(0, 3).map(function (e) { return e.k + ': ' + e.en; });
+  return es.join(' | ') || 'rejected';
+}
+function doSync() {
+  if (LB.busy) return;
+  var items = pendingList();
+  if (!items.length) return;
+  if (!navigator.onLine) { toast('لا يوجد إنترنت · No internet', true); return; }
+  LB.busy = true;
+  var login = LB.srvToken ? Promise.resolve() : (function () {
+    var pw = cleanCred(($('spw') || {}).value);
+    if (!pw) return Promise.reject({ msg: 'أدخل كلمة مرور البوابة · Enter the portal password' });
+    return srvPost('login', null, { username: LB.boot.user.username, password: pw }).then(function (r) {
+      if (r.mustChange) throw { msg: 'غيّر كلمة المرور المؤقتة من البوابة أولاً · Change your temporary password on the portal first' };
+      LB.srvToken = r.token;
+    });
+  })();
+  var ok = 0, bad = 0, stop = null;
+  login.then(function () {
+    return items.reduce(function (chain, it) {
+      return chain.then(function () {
+        if (stop) return;
+        return srvPost('syncOffline', LB.srvToken, { item: itemPayload(it) }).then(function (r) {
+          if (r.synced) {
+            ok++;
+            if (it.kind === 'record') LB.synced.push({ temp: it.tempCode, code: r.patient_code, hospital: it.hospital, at: nowStr() });
+            delete LB.items[it.uuid];
+            return itemDel(it.uuid);
+          }
+          bad++; it.lastError = errSummary(r); return persistItem(it);
+        }, function (e) {
+          if (e && (e.code === 'NET' || e.code === 'AUTH')) { stop = e; if (e.code === 'AUTH') LB.srvToken = null; return; }
+          bad++; it.lastError = (e && e.msg) || 'error'; return persistItem(it);
+        });
+      });
+    }, Promise.resolve());
+  }).then(function () { LB.lastSync = nowStr(); return saveState(); })
+    .then(function () { return stop ? null : silentRefresh(); })
+    .then(function () {
+      LB.busy = false; viewSync();
+      var msg = '<div class="' + (bad || stop ? 'warn-box' : 'ok-box') + '">' + 'تم رفع ' + ok + ' · uploaded ' + ok + (bad ? ' — ' + bad + ' مرفوضة · rejected (see notes)' : '') + (stop ? '<br>' + esc(stop.msg || 'توقفت المزامنة · sync stopped') : '') + '</div>';
+      var el = $('sres'); if (el) el.innerHTML = msg;
+    })
+    .catch(function (e) {
+      LB.busy = false; viewSync();
+      var el = $('sres'); if (el) el.innerHTML = '<div class="err-box">' + esc((e && (e.msg || e.message)) || 'Error') + '</div>';
+    });
+}
+function silentRefresh() {
+  if (!LB.srvToken) return Promise.resolve();
+  return srvPost('bootstrap', LB.srvToken, {}).then(function (b) {
+    LB.boot.hospitals = b.hospitals.map(function (h) { return { code: h.code, name_en: h.name_en, name_ar: h.name_ar, city: h.city, note: h.note }; });
+    LB.boot.config = b.config; LB.boot.user = b.user; LB.boot.fetchedAt = nowStr();
+    return encJson(LB.key, LB.boot).then(function (e) { return kvPut('boot', e); });
+  }).catch(function () { });
+}
+function refreshHospitals() {
+  if (!LB.srvToken) { toast('سجّل دخولك بكلمة مرور البوابة أولاً عبر «مزامنة الآن» · Sign in via “Sync now” first', true); return; }
+  srvPost('bootstrap', LB.srvToken, {}).then(function (b) {
+    LB.boot.hospitals = b.hospitals.map(function (h) { return { code: h.code, name_en: h.name_en, name_ar: h.name_ar, city: h.city, note: h.note }; });
+    LB.boot.config = b.config; LB.boot.user = b.user; LB.boot.fetchedAt = nowStr();
+    return encJson(LB.key, LB.boot).then(function (e) { return kvPut('boot', e); });
+  }).then(function () { toast('حُدّثت قائمة المشافي · Hospital list updated ✓'); }).catch(function (e) { toast(esc((e && e.msg) || 'Error'), true); });
+}
+document.addEventListener('click', function (ev) {
+  var t = ev.target.closest('[data-act]'); if (!t) return;
+  var a = t.getAttribute('data-act');
+  if (a === 'dosync') doSync();
+  else if (a === 'refreshh') refreshHospitals();
+  else if (a === 'clearmap') { LB.synced = []; saveState().then(viewSync); }
+  else if (a === 'gosync') { closeModal(); if (leaveForm()) { S.form = null; showTab('sync'); } }
+});
+
+/* ---------- boot ---------- */
+function ACS_BOOT() {
+  kvGet('salt').then(function (s) { LB.hasSetup = !!s; LB.url = lsGet('acs_srv') || ACS_SERVER_URL_DEFAULT; render(); }).catch(function () { render('التخزين المحلي غير متاح في هذا المتصفح · Local storage is unavailable in this browser'); });
+}
+
+ACS_BOOT();
+if ('serviceWorker' in navigator) { window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); }); }
+</script>
+</body>
+</html>
