@@ -1,7 +1,14 @@
 /* ACS offline app service worker: cache-first app shell; never touches cross-origin (portal) requests */
-var CACHE = 'acs-offline-v3'; /* bump this number on every new index.html release */
-var ASSETS = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
-self.addEventListener('install', function (e) { e.waitUntil(caches.open(CACHE).then(function (c) { return c.addAll(ASSETS.map(function (u) { return new Request(u, { cache: 'reload' }); })); }).then(function () { return self.skipWaiting(); })); });
+var CACHE = 'acs-offline-v15'; /* bump this number on every new index.html release */
+var CORE = ['./', './index.html', './manifest.webmanifest'];   /* must be cached or install fails */
+var OPTIONAL = ['./icon-192.png', './icon-512.png', './icon-512-maskable.png', './apple-touch-icon.png'];   /* a missing icon must NOT break offline install */
+self.addEventListener('install', function (e) {
+  e.waitUntil(caches.open(CACHE).then(function (c) {
+    return c.addAll(CORE.map(function (u) { return new Request(u, { cache: 'reload' }); })).then(function () {
+      return Promise.all(OPTIONAL.map(function (u) { return c.add(new Request(u, { cache: 'reload' })).catch(function () { }); }));
+    });
+  }).then(function () { return self.skipWaiting(); }));
+});
 self.addEventListener('activate', function (e) { e.waitUntil(caches.keys().then(function (ks) { return Promise.all(ks.filter(function (k) { return k !== CACHE; }).map(function (k) { return caches.delete(k); })); }).then(function () { return self.clients.claim(); })); });
 self.addEventListener('fetch', function (e) {
   var r = e.request;

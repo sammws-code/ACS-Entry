@@ -151,7 +151,7 @@ td.wrap{white-space:normal}
 
 .foot{position:fixed;bottom:0;inset-inline:0;background:#fff;border-top:1px solid var(--line);padding:9px 14px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap;z-index:6}
 .badge{padding:2px 10px;border-radius:99px;font-size:.8rem;font-weight:600}
-.badge.Draft{background:var(--amber2);color:#5f4000}.badge.Submitted{background:var(--teal2);color:var(--teal3)}.badge.Verified{background:var(--green2);color:#14573a}.badge.Excluded{background:var(--red2);color:#7D1327}
+.badge.Draft{background:var(--amber2);color:#5f4000}.badge.Submitted{background:var(--teal2);color:var(--teal3)}.badge.Verified{background:var(--green2);color:#14573a}.badge.Excluded{background:var(--red2);color:#7D1327}.badge.Test{background:#ECE8F6;color:#4A3A86}
 
 /* modal + toast */
 .mback{position:fixed;inset:0;background:rgba(19,38,47,.5);display:flex;align-items:center;justify-content:center;padding:14px;z-index:20}
@@ -207,11 +207,15 @@ var ACS_OFFLINE = true;
    Identical code runs on the server (Code.gs) and in the browser (Index.html).
    Single source of truth: fields, options, calculated variables, validation.
    ====================================================================== */
-var ACS_SCHEMA_VERSION = '1.0';
+var ACS_SCHEMA_VERSION = '1.6';
 var ACS_YEARS = [2020, 2021, 2022, 2023, 2024, 2025, 2026];
 var ACS_DEFAULT_YEAR = 2026;
 var ACS_LVEF_ALERT_PCT = 20;
-var ACS_STATUSES = ['Draft', 'Submitted', 'Verified', 'Excluded'];
+/* Pre-specified NR rule for covariates of the primary models (protocol v5.7, Step 5): above MID the multiple-imputation result is reported with equal prominence; above HIGH the variable leaves the primary model */
+var ACS_NR_MID_PCT = 10, ACS_NR_HIGH_PCT = 40;
+/* Variables that decide whether a record is Complete: everything the primary models and the outcome need (descriptive fields such as peak troponin, CK-MB or treatments do not) */
+var ACS_CORE_KEYS = ['age_years', 'sex', 'residence', 'dm', 'htn', 'dyslipidemia', 'acs_type', 'referral_source', 'prior_cad_mi', 'ckd', 'killip_class', 'echo_done', 'in_hospital_death', 'cardiogenic_shock', 'vt_vf', 'heart_failure', 'icu_admission', 'discharge_status'];
+var ACS_STATUSES = ['Draft', 'Submitted', 'Verified', 'Excluded', 'Test'];
 
 function _o(v, ar) { return { v: v, ar: ar }; }
 var _YN = [_o('Yes', 'نعم'), _o('No', 'لا')];
@@ -243,7 +247,7 @@ var ACS_EXCL_REASONS = [
   { v: 'Active malignancy', ar: 'ورم خبيث فعّال' },
   { v: 'Pre-existing NYHA class IV heart failure', ar: 'قصور قلب NYHA IV سابق' },
   { v: 'Silent MI found incidentally', ar: 'احتشاء صامت مكتشف بالصدفة' },
-  { v: 'Incomplete record (ACS type / timing / outcomes missing)', ar: 'سجل ناقص (نوع ACS أو التوقيت أو النتائج)' },
+  { v: 'Incomplete record (ACS type / timing / outcomes missing)', ar: 'سجل ناقص (نوع ACS أو وقت الوصول أو النتائج)' },
   { v: 'Duplicate (chart already entered)', ar: 'تكرار (الإضبارة مُدخلة سابقاً)' },
   { v: 'Other', ar: 'سبب آخر' }
 ];
@@ -276,15 +280,17 @@ var ACS_FIELDS = [
   _f('governorate', 'demo', 'sel', 'Governorate of residence', 'محافظة السكن',
     { opts: ACS_GOVERNORATES.map(function (g) { return _o(g, ACS_GOV_AR[g]); }).concat([_o('Outside Syria', 'خارج سوريا'), _NR]) }),
   _f('education', 'demo', 'sel', 'Education', 'المستوى التعليمي',
-    { opts: [_o('Illiterate', 'أمي'), _o('Primary', 'ابتدائي'), _o('Secondary', 'ثانوي'), _o('University', 'جامعي'), _NR] }),
+    { opts: [_o('Illiterate', 'أمي'), _o('Primary', 'ابتدائي'), _o('Secondary', 'ثانوي'), _o('University', 'جامعي'), _NR],
+      hint: { en: 'Record the 4 levels exactly as in the chart. Most charts do not record education: choose NR then — never guess or infer it from the job or the address. Education is NOT in the primary Regression 1 (protocol v5.7); it is reported descriptively and used only in a restricted exploratory analysis.', ar: 'سجّل المستوى بالمستويات الأربعة كما في الملف. أغلب الإضابير لا تذكر التعليم: اختر NR حينها — لا تخمّن ولا تستنتجه من المهنة أو العنوان. التعليم ليس في الانحدار ١ الأساسي (البروتوكول v5.7)؛ يُعرض وصفياً ويُستخدم فقط في تحليل استكشافي مقيَّد.' } }),
   _f('education_3', 'demo', 'calc', 'Education (3 levels)', 'التعليم (٣ مستويات)',
     { opts: [_o('Below secondary', 'أقل من ثانوي'), _o('Secondary', 'ثانوي'), _o('University+', 'جامعي فأعلى'), _NR],
-      rule: _rule('Illiterate/Primary → Below secondary; Secondary; University → University+. Used in Regression 1 (protocol v5, collapsed categories).', 'أمي/ابتدائي ← أقل من ثانوي؛ ثانوي؛ جامعي ← جامعي فأعلى. يُستخدم في الانحدار ١ (دمج الفئات حسب البروتوكول).') }),
-  _f('employment', 'demo', 'sel', 'Employment', 'الوظيفة', { opts: [_o('Employed', 'موظف / يعمل'), _o('Unemployed', 'عاطل عن العمل'), _o('Retired', 'متقاعد'), _NR] }),
+      rule: _rule('Illiterate/Primary → Below secondary; Secondary; University → University+. Used only in the restricted exploratory analysis of Regression 1 (protocol v5.7), not in the primary model: collapsing is pre-specified to avoid sparse cells and unstable estimates (3-group precedent: Heo 2015).', 'أمي/ابتدائي ← أقل من ثانوي؛ ثانوي؛ جامعي ← جامعي فأعلى. يُستخدم فقط في التحليل الاستكشافي المقيَّد للانحدار ١ (البروتوكول v5.7) وليس في النموذج الأساسي: الدمج مخطط مسبقاً لتفادي الخلايا الشحيحة وعدم استقرار التقديرات (سابقة التقسيم الثلاثي: Heo 2015).') }),
+  _f('employment', 'demo', 'sel', 'Employment', 'الوظيفة', { opts: [_o('Employed', 'موظف / يعمل'), _o('Unemployed', 'عاطل عن العمل'), _o('Retired', 'متقاعد'), _NR],
+    hint: { en: 'Many charts do not record occupation: choose NR then — never guess. Employment is NOT in the primary Regression 1 (protocol v5.7); it is reported descriptively and used only in a restricted exploratory analysis.', ar: 'كثير من الإضابير لا تذكر المهنة: اختر NR حينها — لا تخمّن. الوظيفة ليست في الانحدار ١ الأساسي (البروتوكول v5.7)؛ تُعرض وصفياً وتُستخدم فقط في تحليل استكشافي مقيَّد.' } }),
 
   /* ---------- Timing & presentation ---------- */
   _f('doc_quality', 'time', 'sel', 'Documentation quality of symptom-onset time', 'جودة توثيق وقت بدء الأعراض', { opts: _DOCQ, irr: true,
-    hint: { en: 'Choose first. If the onset time is not documented, the onset field is skipped and S-to-D stays empty.', ar: 'اختر أولاً. إذا لم يكن وقت البدء موثقاً يُتخطى حقل البدء ويبقى S-to-D فارغاً.' } }),
+    hint: { en: 'Choose first. If the onset time is not documented, the onset field is skipped and S-to-D stays empty. Do NOT exclude such a chart: enter it completely — it stays out of the delay analyses and is compared with the analysed patients (protocol v5.7).', ar: 'اختر أولاً. إذا لم يكن وقت البدء موثقاً يُتخطى حقل البدء ويبقى S-to-D فارغاً. لا تستبعد هذه الإضبارة: أدخلها كاملة — تبقى خارج تحليلات التأخر وتُقارَن بالمحلَّلين (البروتوكول v5.7).' } }),
   _f('onset_dt', 'time', 'dt', 'Symptom onset (date & time)', 'بدء الأعراض (التاريخ والوقت)', { irr: true,
     showIf: [{ k: 'doc_quality', in: ['Exact time documented', 'Approximate time documented'] }] }),
   _f('door_dt', 'time', 'dt', 'ED arrival / door (date & time)', 'الوصول للإسعاف (التاريخ والوقت)', { irr: true }),
@@ -306,10 +312,10 @@ var ACS_FIELDS = [
     { opts: [_o('Typical chest pain', 'ألم صدري نموذجي'), _o('Atypical chest pain', 'ألم صدري غير نموذجي'), _o('Dyspnea', 'زلة تنفسية'),
       _o('Epigastric / abdominal pain', 'ألم شرسوفي / بطني'), _o('Syncope', 'غشي'), _o('Cardiac arrest', 'ايقاف قلبي'), _o('Other', 'أخرى'), _NR] }),
   _f('referral_source', 'time', 'sel', 'Referral source', 'مصدر الإحالة', { irr: true,
-    opts: [_o('Direct (self/family)', 'مباشر (المريض/الأهل)'), _o('Via Primary HC', 'عبر مركز صحي أولي'), _o('Via District Hospital', 'عبر مشفى منطقة'), _o('EMS', 'إسعاف')],
-    hint: { en: 'Transferred patients are excluded at screening.', ar: 'المحوَّلون من مشفى آخر يُستبعدون عند الفرز.' } }),
-  _f('referral_2', 'time', 'calc', 'Referral (2 levels)', 'الإحالة (مستويان)',
-    { opts: [_o('Direct', 'مباشر'), _o('Via referral', 'عبر إحالة')], rule: _rule('Direct (self/family) → Direct; any other source → Via referral (protocol v5).', 'مباشر ← مباشر؛ أي مصدر آخر ← عبر إحالة (حسب البروتوكول).') }),
+    opts: [_o('Direct (self/family)', 'مباشر (المريض/الأهل)'), _o('Via Primary HC', 'عبر مركز صحي أولي'), _o('Via District Hospital', 'عبر مشفى منطقة'), _o('EMS', 'إسعاف'), _NR],
+    hint: { en: 'Transferred patients are excluded at screening. If the chart does not say how the patient arrived, choose NR — do not guess.', ar: 'المحوَّلون من مشفى آخر يُستبعدون عند الفرز. إذا لم يذكر الملف كيف وصل المريض اختر NR — لا تخمّن.' } }),
+  _f('referral_3', 'time', 'calc', 'Referral (3 levels)', 'الإحالة (ثلاثة مستويات)',
+    { opts: [_o('Direct', 'مباشر'), _o('EMS', 'إسعاف'), _o('Via health facility', 'عبر منشأة صحية'), _NR], rule: _rule('Direct (self/family) → Direct; EMS → EMS; Primary HC or District Hospital → Via health facility; NR stays NR (protocol v5.7). EMS is kept apart because ambulance arrival is associated with EARLIER presentation, the opposite of facility referral.', 'مباشر ← مباشر؛ إسعاف ← إسعاف؛ مركز صحي أولي أو مشفى منطقة ← عبر منشأة صحية؛ NR يبقى NR (حسب البروتوكول v5.7). يُفصل الإسعاف لأن الوصول بالإسعاف يرتبط بتقديم أبكر، عكس الإحالة من منشأة.') }),
   _f('transport_mode', 'time', 'sel', 'Transport mode', 'وسيلة النقل', { opts: [_o('Private vehicle', 'سيارة خاصة'), _o('Ambulance', 'إسعاف'), _o('Public transport', 'نقل عام'), _NR] }),
   _f('year_2024', 'id', 'calc', 'Admission period (before/after 2024)', 'فترة الدخول (قبل/بعد 2024)',
     { opts: [_o('Before 2024', 'قبل 2024'), _o('2024 or later', '2024 فما بعد')], rule: _rule('Binary replacement of year categories (protocol v5): ≤2023 vs ≥2024. If nearly all records are 2025–2026 this variable has no variation — drop it from the model.', 'تحويل ثنائي لسنة الدخول (حسب البروتوكول): ≤2023 مقابل ≥2024. إذا كانت معظم السجلات 2025–2026 فلا يوجد تباين — يُحذف من النموذج.') }),
@@ -329,7 +335,7 @@ var ACS_FIELDS = [
   /* ---------- Diagnosis & severity ---------- */
   _f('acs_type', 'dx', 'sel', 'ACS type', 'نوع ACS', { irr: true,
     opts: [_o('STEMI', 'STEMI'), _o('NSTEMI', 'NSTEMI'), _o('Unstable Angina', 'ذبحة غير مستقرة')],
-    hint: { en: 'STEMI: ST elevation + troponin+. NSTEMI: no ST elevation + troponin+. UA: troponin−.', ar: 'STEMI: ارتفاع ST + تروبونين إيجابي. NSTEMI: دون ارتفاع ST + تروبونين إيجابي. UA: تروبونين سلبي.' } }),
+    hint: { en: 'STEMI: ST elevation + troponin+. NSTEMI: no persistent ST elevation + troponin+. UA: no persistent ST elevation + troponin−.', ar: 'STEMI: ارتفاع ST + تروبونين إيجابي. NSTEMI: دون ارتفاع ST مستمر + تروبونين إيجابي. UA: دون ارتفاع ST مستمر + تروبونين سلبي.' } }),
   _f('killip_class', 'dx', 'sel', 'Killip class (at presentation)', 'تصنيف Killip (عند التقديم)', { irr: true,
     opts: [_o('I', 'I'), _o('II', 'II'), _o('III', 'III'), _o('IV', 'IV'), _NR],
     hint: { en: 'I none · II rales/S3 · III pulmonary edema · IV cardiogenic shock', ar: 'I لا قصور · II خراخر/S3 · III وذمة رئة · IV صدمة قلبية' } }),
@@ -339,7 +345,7 @@ var ACS_FIELDS = [
   _f('ecg', 'dx', 'sel', 'ECG', 'تخطيط القلب',
     { opts: [_o('ST elevation', 'ارتفاع ST'), _o('New LBBB', 'LBBB جديد'), _o('ST depression / T inversion', 'هبوط ST / انقلاب T'), _o('Normal / non-diagnostic', 'طبيعي / غير تشخيصي'), _o('Other', 'أخرى'), _NR] }),
   _f('troponin_status', 'dx', 'sel', 'Troponin result', 'نتيجة التروبونين', { opts: [_o('Positive', 'إيجابي'), _o('Negative', 'سلبي'), _NR],
-    hint: { en: 'As interpreted in the chart (above the lab’s reference limit).', ar: 'كما هو مفسَّر في الملف (فوق الحد المرجعي للمخبر).' } }),
+    hint: { en: 'As interpreted in the chart (above the lab’s reference limit). If the chart has no troponin result choose NR: STEMI diagnosed on the ECG is still accepted, but NSTEMI / unstable angina cannot be confirmed without it — exclude that chart (reason: ACS not confirmed per criteria).', ar: 'كما هو مفسَّر في الملف (فوق الحد المرجعي للمخبر). إذا لم توجد نتيجة تروبونين بالإضبارة اختر NR: يُقبل STEMI المشخَّص بالتخطيط، أما NSTEMI والذبحة غير المستقرة فلا يمكن تأكيدهما بدونها — استبعد الإضبارة (السبب: تشخيص ACS غير مؤكد وفق المعايير).' } }),
   _f('infarct_territory', 'dx', 'sel', 'Infarct territory', 'منطقة الاحتشاء',
     { showIf: [{ k: 'acs_type', in: ['STEMI', 'NSTEMI'] }],
       opts: [_o('Anterior', 'أمامي'), _o('Inferior', 'سفلي'), _o('Lateral', 'جانبي'), _o('Posterior', 'خلفي'), _o('Diffuse', 'منتشر'), _NR] }),
@@ -368,36 +374,43 @@ var ACS_FIELDS = [
   _f('lvef_category', 'out', 'calc', 'LVEF category', 'فئة LVEF',
     { opts: [_o('>=50%', '≥50%'), _o('40-49%', '40-49%'), _o('<40%', '<40%'), _NR],
       rule: _rule('≥50% preserved; 40–49% mildly reduced; <40% reduced. NR if echo not done or LVEF not recorded.', '≥50% محفوظة؛ 40–49% منخفضة قليلاً؛ <40% منخفضة. NR إذا لم يُجرَ إيكو أو لم تُسجل LVEF.') }),
-  _f('heart_failure', 'out', 'sel', 'New-onset heart failure', 'قصور قلب حديث', { opts: _YN }),
-  _f('cardiogenic_shock', 'out', 'sel', 'Cardiogenic shock', 'صدمة قلبية', { opts: _YN, irr: true }),
-  _f('vt_vf', 'out', 'sel', 'Sustained VT / VF', 'تسرع بطيني مستمر / رجفان بطيني', { opts: _YN }),
+  _f('heart_failure', 'out', 'sel', 'New-onset heart failure', 'قصور قلب حديث', { opts: _YN, irr: true, hint: { en: 'Yes = documented anywhere in the chart from admission to discharge/death. No = no such event documented after reviewing the whole chart (a valid discharge/death date is required to submit).', ar: 'نعم = موثّق في أي موضع من الملف من الدخول حتى الخروج/الوفاة. لا = لا يوجد حدث موثّق بعد مراجعة الملف كاملاً (تاريخ الخروج/الوفاة الصالح مطلوب للتسليم).' } }),
+  _f('cardiogenic_shock', 'out', 'sel', 'Cardiogenic shock', 'صدمة قلبية', { opts: _YN, irr: true, hint: { en: 'Yes also if shock was present on arrival (Killip IV) — the endpoint covers the whole hospitalization. Yes = documented anywhere in the chart from admission to discharge/death. No = no such event documented after reviewing the whole chart (a valid discharge/death date is required to submit).', ar: 'نعم أيضاً إذا كانت الصدمة موجودة عند الوصول (Killip IV) — النقطة النهائية تشمل كامل فترة الإقامة. نعم = موثّق في أي موضع من الملف من الدخول حتى الخروج/الوفاة. لا = لا يوجد حدث موثّق بعد مراجعة الملف كاملاً (تاريخ الخروج/الوفاة الصالح مطلوب للتسليم).' } }),
+  _f('vt_vf', 'out', 'sel', 'Sustained VT / VF', 'تسرع بطيني مستمر / رجفان بطيني', { opts: _YN, irr: true, hint: { en: 'Yes = documented anywhere in the chart from admission to discharge/death. No = no such event documented after reviewing the whole chart (a valid discharge/death date is required to submit).', ar: 'نعم = موثّق في أي موضع من الملف من الدخول حتى الخروج/الوفاة. لا = لا يوجد حدث موثّق بعد مراجعة الملف كاملاً (تاريخ الخروج/الوفاة الصالح مطلوب للتسليم).' } }),
   _f('heart_block', 'out', 'sel', 'High-grade heart block', 'حصار قلبي عالي الدرجة', { opts: _YN }),
   _f('mech_complication', 'out', 'sel', 'Mechanical complication', 'اختلاط ميكانيكي',
     { opts: [_o('No', 'لا'), _o('VSD', 'VSD'), _o('MR', 'MR'), _o('Free wall rupture', 'تمزق الجدار الحر')], codes: { 'No': 0, 'VSD': 1, 'MR': 2, 'Free wall rupture': 3 } }),
   _f('stroke_tia', 'out', 'sel', 'Stroke / TIA', 'سكتة / TIA', { opts: _YN }),
   _f('aki', 'out', 'sel', 'Acute kidney injury', 'أذية كلوية حادة', { opts: _YN }),
-  _f('icu_admission', 'out', 'sel', 'ICU admission', 'دخول عناية مركزة', { opts: _YN, irr: true }),
+  _f('icu_admission', 'out', 'sel', 'ICU admission', 'دخول عناية مركزة', { opts: _YN, irr: true, hint: { en: 'Yes = documented anywhere in the chart from admission to discharge/death. No = no such event documented after reviewing the whole chart (a valid discharge/death date is required to submit).', ar: 'نعم = موثّق في أي موضع من الملف من الدخول حتى الخروج/الوفاة. لا = لا يوجد حدث موثّق بعد مراجعة الملف كاملاً (تاريخ الخروج/الوفاة الصالح مطلوب للتسليم).' } }),
   _f('iabp_mcs', 'out', 'sel', 'IABP / mechanical support', 'بالون عكسي / دعم ميكانيكي', { opts: _YN }),
-  _f('in_hospital_death', 'out', 'sel', 'In-hospital death', 'وفاة داخل المشفى', { opts: _YN, irr: true }),
+  _f('in_hospital_death', 'out', 'sel', 'In-hospital death', 'وفاة داخل المشفى', { opts: _YN, irr: true, hint: { en: 'Yes = documented anywhere in the chart from admission to discharge/death. No = no such event documented after reviewing the whole chart (a valid discharge/death date is required to submit).', ar: 'نعم = موثّق في أي موضع من الملف من الدخول حتى الخروج/الوفاة. لا = لا يوجد حدث موثّق بعد مراجعة الملف كاملاً (تاريخ الخروج/الوفاة الصالح مطلوب للتسليم).' } }),
+  _f('discharge_status', 'out', 'sel', 'Discharge status', 'حالة الخروج',
+    { opts: [_o('Discharged, care completed', 'خرج بعد إتمام العلاج'), _o('Died in hospital', 'توفي داخل المشفى'), _o('Left against medical advice', 'غادر على مسؤوليته'), _o('Transferred to another hospital', 'حُوِّل إلى مشفى آخر'), _NR],
+      codes: { 'Discharged, care completed': 0, 'Died in hospital': 1, 'Left against medical advice': 2, 'Transferred to another hospital': 3 },
+      hint: { en: 'How the hospital stay ended, as documented in the chart. Patients who left against medical advice or were transferred out cannot be followed for events after they left; they are excluded in a pre-specified sensitivity analysis. Must agree with In-hospital death.', ar: 'كيف انتهت الإقامة حسب الملف. المرضى الذين غادروا على مسؤوليتهم أو حُوِّلوا إلى مشفى آخر لا يمكن تتبّع أحداثهم بعد المغادرة؛ يُستبعدون في تحليل حساسية محدد مسبقاً. يجب أن يتوافق مع وفاة داخل المشفى.' } }),
   _f('cause_of_death', 'out', 'sel', 'Cause of death', 'سبب الوفاة', { showIf: [{ k: 'in_hospital_death', in: ['Yes'] }],
     opts: [_o('Cardiac', 'قلبي'), _o('Non-cardiac', 'غير قلبي'), _o('Unknown', 'غير معروف')] }),
   _f('mahce', 'out', 'calc', 'MAHCE (primary composite)', 'MAHCE (النقطة المركبة الأساسية)',
     { opts: _YN, rule: _rule('Yes if ANY: in-hospital death, cardiogenic shock, sustained VT/VF, new heart failure, ICU admission, or LVEF <40%.', 'نعم إذا حدث أي مما يلي: وفاة، صدمة قلبية، VT/VF مستمر، قصور قلب حديث، عناية مركزة، أو LVEF <40%.') }),
   _f('mahce_excl_lvef', 'out', 'calc', 'MAHCE excluding LVEF (sensitivity)', 'MAHCE بدون LVEF (تحليل حساسية)',
-    { opts: _YN, rule: _rule('Same as MAHCE but only the 5 clinical components. Use as sensitivity analysis if LVEF missing >20%.', 'مثل MAHCE لكن بالمكونات السريرية الخمسة فقط. يُستخدم كتحليل حساسية إذا زادت نسبة فقدان LVEF عن 20%.') }),
+    { opts: _YN, rule: _rule('Same as MAHCE but only the 5 clinical components (MAHCE-5). Reported next to the full MAHCE in every Regression 2 analysis (protocol v5.7).', 'مثل MAHCE لكن بالمكونات السريرية الخمسة فقط (MAHCE-5). يُعرض دائماً بجانب MAHCE الكامل في كل تحليل للانحدار ٢ (حسب البروتوكول v5.7).') }),
+
+  _f('outcome_censored', 'out', 'calc', 'Outcome not fully observed (left against advice / transferred out)', 'نتيجة غير مرصودة بالكامل (مغادرة على المسؤولية / تحويل)',
+    { opts: _YN, rule: _rule('Yes if discharge status is "Left against medical advice" or "Transferred to another hospital"; No if discharged with care completed or died in hospital; blank if NR. Used for the sensitivity analysis that excludes these patients (protocol v5.7, 1.7).', 'نعم إذا كانت حالة الخروج «غادر على مسؤوليته» أو «حُوِّل إلى مشفى آخر»؛ لا إذا خرج بعد إتمام العلاج أو توفي داخل المشفى؛ فارغ إذا NR. يُستخدم في تحليل الحساسية الذي يستبعد هؤلاء المرضى (البروتوكول v5.7، 1.7).') }),
 
   /* ---------- Completeness (calculated) ---------- */
   _f('nr_count', 'out', 'calc', 'Number of NR fields', 'عدد الحقول غير المسجلة (NR)',
-    { rule: _rule('Count of fields recorded as NR (onset time is counted when its documentation is missing).', 'عدد الحقول المسجلة NR (يُحسب وقت البدء إذا لم يكن موثقاً).') }),
+    { rule: _rule('Count of ALL fields recorded as NR, for monitoring (onset time is counted when its documentation is missing). It does not decide completeness.', 'عدد كل الحقول المسجلة NR للمتابعة (يُحسب وقت البدء إذا لم يكن موثقاً). لا يحدد اكتمال السجل.') }),
   _f('nr_fields', 'out', 'calc', 'Fields recorded as NR', 'الحقول غير المسجلة',
     { rule: _rule('Variable names recorded as NR, separated by semicolons.', 'أسماء المتغيرات المسجلة NR مفصولة بفاصلة منقوطة.') }),
   _f('completeness', 'out', 'calc', 'Record completeness', 'اكتمال السجل',
     { opts: [_o('Complete', 'مكتمل'), _o('Incomplete', 'غير مكتمل')],
-      rule: _rule('Incomplete if ANY field is NR; Complete if none. Values missing from the chart are never filled in — they are recorded as NR and the record is classified automatically.', 'غير مكتمل إذا كان أي حقل NR؛ مكتمل إذا لا يوجد. القيم غير الموجودة بالإضبارة لا تُعبَّأ أبداً — تُسجَّل NR ويُصنَّف السجل تلقائياً.') }),
+      rule: _rule('Incomplete if any variable needed by the primary analyses is NR (age, sex, residence, DM, HTN, dyslipidemia, ACS type, referral source, prior CAD/MI, CKD, Killip class, echo done, the MAHCE components, discharge status) or if onset time is not documented; Complete otherwise. NR in descriptive fields (peak troponin, CK-MB, treatments, etc.) does not make a record Incomplete. Values missing from the chart are never filled in — they are recorded as NR.', 'غير مكتمل إذا كان أي متغير تحتاجه التحليلات الأساسية NR (العمر، الجنس، السكن، DM، HTN، اضطراب الشحوم، نوع ACS، مصدر الإحالة، قصة CAD/MI، CKD، Killip، الإيكو، مكوّنات MAHCE، حالة الخروج) أو لم يكن وقت البدء موثقاً؛ مكتمل خلاف ذلك. NR في الحقول الوصفية (ذروة التروبونين، CK-MB، العلاجات…) لا يجعل السجل غير مكتمل. القيم غير الموجودة بالإضبارة لا تُعبَّأ أبداً — تُسجَّل NR.') }),
   _f('model1_complete', 'out', 'calc', 'Complete for Regression 1', 'مكتمل للانحدار ١ (Complete-case)',
-    { opts: _YN, rule: _rule('Yes if age, sex, residence, education, employment, DM, HTN, dyslipidemia, ACS type and referral source are all recorded AND onset time is documented. Complete-case flag for Regression 1 (delay predictors).', 'نعم إذا سُجّل العمر والجنس والسكن والتعليم والوظيفة وDM وHTN واضطراب الشحوم ونوع ACS ومصدر الإحالة وكان وقت البدء موثقاً. علامة التحليل الكامل (complete-case) للانحدار ١.') }),
+    { opts: _YN, rule: _rule('Yes if age, sex, residence, DM, HTN, dyslipidemia, ACS type and referral source are all recorded AND onset time is documented. Education and employment are NOT required (they are not in the primary Regression 1, protocol v5.7). Complete-case flag for Regression 1 (delay predictors).', 'نعم إذا سُجّل العمر والجنس والسكن وDM وHTN واضطراب الشحوم ونوع ACS ومصدر الإحالة وكان وقت البدء موثقاً. التعليم والوظيفة غير مطلوبين (ليسا في الانحدار ١ الأساسي، البروتوكول v5.7). علامة التحليل الكامل (complete-case) للانحدار ١.') }),
   _f('model2_complete', 'out', 'calc', 'Complete for Regression 2', 'مكتمل للانحدار ٢ (Complete-case)',
-    { opts: _YN, rule: _rule('Yes if age, ACS type, Killip class and DM are recorded AND S-to-D is calculable AND MAHCE is determined. Complete-case flag for Regression 2 (delay → MAHCE).', 'نعم إذا سُجّل العمر ونوع ACS وKillip وDM وأمكن حساب S-to-D وتحدد MAHCE. علامة التحليل الكامل (complete-case) للانحدار ٢.') }),
+    { opts: _YN, rule: _rule('Yes if age, ACS type, sex, DM, HTN, prior CAD/MI and CKD are recorded AND onset time is documented (S-to-D calculable) AND MAHCE is determined. Killip class is NOT required (it is not in the primary model 2a). Complete-case flag for Regression 2 (delay → MAHCE).', 'نعم إذا سُجّل العمر ونوع ACS والجنس وDM وHTN وداء الشريان التاجي/الاحتشاء السابق والقصور الكلوي المزمن، وكان وقت البدء موثقاً (S-to-D قابل للحساب)، وتحدد MAHCE. تصنيف Killip غير مطلوب (ليس ضمن النموذج الأساسي 2a). علامة التحليل الكامل (complete-case) للانحدار ٢.') }),
 
   /* ---------- Notes ---------- */
   _f('notes', 'out', 'text', 'Notes (no names, phone numbers or ID numbers)', 'ملاحظات (بدون أسماء أو أرقام هواتف أو أرقام هوية)', { optional: true })
@@ -451,6 +464,20 @@ function acsNum(v) {
 }
 
 /* ------------------- calculated variables (authoritative) ------------------- */
+/* MAHCE from its components (shared by the data-entry calculation and the inter-rater report) */
+function acsMahce(v) {
+  var lv = '';
+  if (v.echo_done === 'No') lv = 'NR';
+  else if (v.echo_done === 'Yes') {
+    var lp = acsNum(v.lvef_pct);
+    if (v.lvef_pct === 'NR') lv = 'NR';
+    else if (lp !== null) lv = lp >= 50 ? '>=50%' : lp >= 40 ? '40-49%' : '<40%';
+  }
+  var comps = [v.in_hospital_death, v.cardiogenic_shock, v.vt_vf, v.heart_failure, v.icu_admission];
+  var anyYes = comps.indexOf('Yes') >= 0, anyBlank = false;
+  for (var i = 0; i < comps.length; i++) if (acsBlank(comps[i])) anyBlank = true;
+  return { lv: lv, m5: anyYes ? 'Yes' : (anyBlank ? '' : 'No'), m: (anyYes || lv === '<40%') ? 'Yes' : ((anyBlank || lv === '') ? '' : 'No') };
+}
 function acsCompute(v) {
   var o = {};
   var ad = acsParseDate(v.admission_date), dd = acsParseDate(v.discharge_date);
@@ -488,23 +515,12 @@ function acsCompute(v) {
   }
 
   var rs = v.referral_source;
-  o.referral_2 = acsBlank(rs) ? '' : rs === 'Direct (self/family)' ? 'Direct' : 'Via referral';
+  o.referral_3 = acsBlank(rs) ? '' : rs === 'Direct (self/family)' ? 'Direct' : rs === 'EMS' ? 'EMS' : rs === 'NR' ? 'NR' : 'Via health facility';
 
-  var lv = '';
-  if (v.echo_done === 'No') lv = 'NR';
-  else if (v.echo_done === 'Yes') {
-    var lp = acsNum(v.lvef_pct);
-    if (v.lvef_pct === 'NR') lv = 'NR';
-    else if (lp !== null) lv = lp >= 50 ? '>=50%' : lp >= 40 ? '40-49%' : '<40%';
-  }
-  o.lvef_category = lv;
-
-  var comps = [v.in_hospital_death, v.cardiogenic_shock, v.vt_vf, v.heart_failure, v.icu_admission];
-  var anyYes = comps.indexOf('Yes') >= 0, anyBlank = false;
-  for (var i = 0; i < comps.length; i++) if (acsBlank(comps[i])) anyBlank = true;
-  o.mahce_excl_lvef = anyYes ? 'Yes' : (anyBlank ? '' : 'No');
-  if (anyYes || lv === '<40%') o.mahce = 'Yes';
-  else o.mahce = (anyBlank || lv === '') ? '' : 'No';
+  var dsx = v.discharge_status;
+  o.outcome_censored = (dsx === 'Left against medical advice' || dsx === 'Transferred to another hospital') ? 'Yes' : (dsx === 'Discharged, care completed' || dsx === 'Died in hospital') ? 'No' : '';
+  var mh = acsMahce(v);
+  o.lvef_category = mh.lv; o.mahce_excl_lvef = mh.m5; o.mahce = mh.m;
   var nrl = [], pending = false, i2;
   for (i2 = 0; i2 < ACS_FIELDS.length; i2++) {
     var ff = ACS_FIELDS[i2];
@@ -515,12 +531,15 @@ function acsCompute(v) {
   if (dq === 'Patient unable to specify') nrl.push('onset_dt');
   o.nr_count = nrl.length;
   o.nr_fields = nrl.join(';');
-  o.completeness = pending ? '' : (nrl.length ? 'Incomplete' : 'Complete');
-  var m1 = ['age_years', 'sex', 'residence', 'education', 'employment', 'dm', 'htn', 'dyslipidemia', 'acs_type', 'referral_source'], m1no = false, m1p = false;
+  var coreNr = false, corePending = false, ci;
+  for (ci = 0; ci < ACS_CORE_KEYS.length; ci++) { var cv = v[ACS_CORE_KEYS[ci]]; if (cv === 'NR') coreNr = true; else if (cv === '' || cv === undefined || cv === null) corePending = true; }
+  if (o.analysis_set === 'No') coreNr = true; else if (o.analysis_set === '') corePending = true;
+  o.completeness = corePending ? '' : (coreNr ? 'Incomplete' : 'Complete');
+  var m1 = ['age_years', 'sex', 'residence', 'dm', 'htn', 'dyslipidemia', 'acs_type', 'referral_source'], m1no = false, m1p = false;
   for (i2 = 0; i2 < m1.length; i2++) { var mv = v[m1[i2]]; if (mv === 'NR') m1no = true; else if (mv === '' || mv === undefined) m1p = true; }
   if (o.analysis_set === 'No') m1no = true; else if (o.analysis_set === '') m1p = true;
   o.model1_complete = m1no ? 'No' : (m1p ? '' : 'Yes');
-  var m2 = ['age_years', 'acs_type', 'killip_class', 'dm'], m2no = false, m2p = false;
+  var m2 = ['age_years', 'acs_type', 'sex', 'dm', 'htn', 'prior_cad_mi', 'ckd'], m2no = false, m2p = false;
   for (i2 = 0; i2 < m2.length; i2++) { var qv = v[m2[i2]]; if (qv === 'NR') m2no = true; else if (qv === '' || qv === undefined) m2p = true; }
   if (o.analysis_set === 'No') m2no = true; else if (o.analysis_set === '') m2p = true;
   if (o.mahce === '') m2p = true;
@@ -606,6 +625,8 @@ function acsValidate(raw, opts) {
     else if (ad - doorDay > 2 * 86400000) W('ADM_GAP', 'admission_date', 'Admission is more than 2 days after ED arrival — check dates.', 'الدخول بعد أكثر من يومين من الوصول للإسعاف — تحقق من التواريخ.');
   }
   var sbp = acsNum(vals.sbp_mmhg), dbp = acsNum(vals.dbp_mmhg), hr = acsNum(vals.hr_bpm);
+  if (vals.in_hospital_death === 'Yes' && !acsBlank(vals.discharge_status) && vals.discharge_status !== 'Died in hospital') E('discharge_status', 'In-hospital death = Yes, so discharge status must be "Died in hospital".', 'وفاة داخل المشفى = نعم، لذا يجب أن تكون حالة الخروج «توفي داخل المشفى».');
+  if (vals.discharge_status === 'Died in hospital' && vals.in_hospital_death === 'No') E('in_hospital_death', 'Discharge status is "Died in hospital", so In-hospital death must be Yes.', 'حالة الخروج «توفي داخل المشفى»، لذا يجب أن تكون وفاة داخل المشفى = نعم.');
   if (sbp !== null && dbp !== null && sbp <= dbp) E('sbp_mmhg', 'Systolic must be higher than diastolic.', 'الانقباضي يجب أن يكون أعلى من الانبساطي.');
 
   /* ----- soft warnings (saved as QC flags, require confirmation) ----- */
@@ -613,6 +634,7 @@ function acsValidate(raw, opts) {
   if (mins !== null && mins > 43200) W('STOD_LONG', 'onset_dt', 'S-to-D is longer than 30 days — verify onset time.', 'زمن S-to-D أطول من 30 يوماً — تحقق من وقت البدء.');
   var acs = vals.acs_type, tro = vals.troponin_status, ecg = vals.ecg;
   if ((acs === 'STEMI' || acs === 'NSTEMI') && tro === 'Negative') W('DX_TROP', 'acs_type', 'STEMI/NSTEMI with negative troponin contradicts the study definition.', 'STEMI/NSTEMI مع تروبونين سلبي يخالف تعريف الدراسة.');
+  if (mode === 'submit' && (acs === 'NSTEMI' || acs === 'Unstable Angina') && tro === 'NR') E('troponin_status', 'NSTEMI / unstable angina cannot be confirmed without a documented troponin result (protocol v5.7). If the chart has none, exclude it with the reason “ACS not confirmed per criteria”.', 'لا يمكن تأكيد NSTEMI أو الذبحة غير المستقرة دون نتيجة تروبونين موثقة (البروتوكول v5.7). إذا لم توجد بالإضبارة فاستبعدها بسبب «تشخيص ACS غير مؤكد وفق المعايير».');
   if (acs === 'Unstable Angina' && tro === 'Positive') W('DX_TROP_UA', 'acs_type', 'Unstable angina with positive troponin contradicts the study definition.', 'ذبحة غير مستقرة مع تروبونين إيجابي تخالف تعريف الدراسة.');
   if (acs === 'STEMI' && !acsBlank(ecg) && ecg !== 'ST elevation' && ecg !== 'New LBBB' && ecg !== 'NR') W('DX_ECG', 'acs_type', 'STEMI without ST elevation / new LBBB on ECG.', 'STEMI دون ارتفاع ST أو LBBB جديد في التخطيط.');
   if ((acs === 'NSTEMI' || acs === 'Unstable Angina') && ecg === 'ST elevation') W('DX_ECG2', 'acs_type', 'NSTEMI/UA with ST elevation on ECG.', 'NSTEMI/UA مع ارتفاع ST في التخطيط.');
@@ -654,23 +676,129 @@ function acsCodingText(f) {
 }
 
 /* ---------------------- agreement statistics (IRR) ---------------------- */
-function acsKappa(pairs) {
+/* Numerical helpers (regularised incomplete beta -> F quantile) for the ICC confidence interval */
+function acsLgamma(x) {
+  var c = [76.18009172947146, -86.50532032941677, 24.01409824083091, -1.231739572450155, 0.1208650973866179e-2, -0.5395239384953e-5];
+  var y = x, t = x + 5.5, s = 1.000000000190015, j;
+  t -= (x + 0.5) * Math.log(t);
+  for (j = 0; j < 6; j++) { y += 1; s += c[j] / y; }
+  return -t + Math.log(2.5066282746310005 * s / x);
+}
+function acsBetaCF(x, a, b) {
+  var FP = 1e-300, qab = a + b, qap = a + 1, qam = a - 1, c = 1, d = 1 - qab * x / qap, h, m, m2, aa, del;
+  if (Math.abs(d) < FP) d = FP;
+  d = 1 / d; h = d;
+  for (m = 1; m <= 300; m++) {
+    m2 = 2 * m;
+    aa = m * (b - m) * x / ((qam + m2) * (a + m2));
+    d = 1 + aa * d; if (Math.abs(d) < FP) d = FP;
+    c = 1 + aa / c; if (Math.abs(c) < FP) c = FP;
+    d = 1 / d; h *= d * c;
+    aa = -(a + m) * (qab + m) * x / ((a + m2) * (qap + m2));
+    d = 1 + aa * d; if (Math.abs(d) < FP) d = FP;
+    c = 1 + aa / c; if (Math.abs(c) < FP) c = FP;
+    d = 1 / d; del = d * c; h *= del;
+    if (Math.abs(del - 1) < 3e-14) break;
+  }
+  return h;
+}
+function acsIBeta(x, a, b) {
+  if (x <= 0) return 0;
+  if (x >= 1) return 1;
+  var bt = Math.exp(acsLgamma(a + b) - acsLgamma(a) - acsLgamma(b) + a * Math.log(x) + b * Math.log(1 - x));
+  return x < (a + 1) / (a + b + 2) ? bt * acsBetaCF(x, a, b) / a : 1 - bt * acsBetaCF(1 - x, b, a) / b;
+}
+function acsFCdf(x, d1, d2) { return x <= 0 ? 0 : acsIBeta(d1 * x / (d1 * x + d2), d1 / 2, d2 / 2); }
+function acsFQuantile(p, d1, d2) {
+  var lo = 0, hi = 1, i, mid;
+  while (acsFCdf(hi, d1, d2) < p && hi < 1e12) hi *= 2;
+  for (i = 0; i < 200; i++) { mid = (lo + hi) / 2; if (acsFCdf(mid, d1, d2) < p) lo = mid; else hi = mid; }
+  return (lo + hi) / 2;
+}
+function acsRng(seed) {  /* mulberry32: deterministic, so a bootstrap CI is reproducible */
+  var a = seed >>> 0;
+  return function () {
+    a = (a + 0x6D2B79F5) >>> 0;
+    var t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+/* Cohen's kappa for two raters. 95% CI: Fleiss-Cohen-Everitt large-sample variance, clamped to [-1, 1];
+   CI is null when it cannot be estimated (perfect agreement or one category only).
+   Also returns PABAK and Gwet's AC1 (both robust to the kappa paradox with rare categories).
+   qTotal = number of possible categories (defaults to the number observed). */
+function acsKappa(pairs, qTotal) {
   var n = pairs.length;
   if (!n) return null;
-  var ra = {}, rb = {}, po = 0, i, c;
-  for (i = 0; i < n; i++) {
-    var a = pairs[i][0], b = pairs[i][1];
-    if (a === b) po++;
-    ra[a] = (ra[a] || 0) + 1; rb[b] = (rb[b] || 0) + 1;
-  }
-  po = po / n;
-  var pe = 0;
-  for (c in ra) { if (rb[c] !== undefined) pe += (ra[c] / n) * (rb[c] / n); }
+  var cats = [], seen = {}, i, j, c;
+  for (i = 0; i < n; i++) for (j = 0; j < 2; j++) { c = pairs[i][j]; if (!seen[c]) { seen[c] = 1; cats.push(c); } }
+  var q = cats.length, idx = {}, m = [], ra = [], rb = [];
+  for (i = 0; i < q; i++) { idx[cats[i]] = i; ra.push(0); rb.push(0); m.push([]); for (j = 0; j < q; j++) m[i].push(0); }
+  for (i = 0; i < n; i++) { var a = idx[pairs[i][0]], b = idx[pairs[i][1]]; m[a][b]++; ra[a]++; rb[b]++; }
+  var po = 0, pe = 0, pr = [], pc = [];
+  for (i = 0; i < q; i++) { po += m[i][i]; pr.push(ra[i] / n); pc.push(rb[i] / n); pe += pr[i] * pc[i]; }
+  po /= n;
   var kappa;
   if (pe >= 1) kappa = po >= 1 ? 1 : null; else kappa = (po - pe) / (1 - pe);
-  var se = (pe >= 1 || kappa === null) ? null : Math.sqrt(po * (1 - po) / (n * Math.pow(1 - pe, 2)));
-  return { n: n, agree: po, kappa: kappa, lo: se === null ? null : kappa - 1.96 * se, hi: se === null ? null : kappa + 1.96 * se };
+  var lo = null, hi = null;
+  if (kappa !== null && pe < 1) {
+    var k1 = 1 - kappa, t1 = 0, t2 = 0;
+    for (i = 0; i < q; i++) {
+      t1 += (m[i][i] / n) * Math.pow(1 - (pr[i] + pc[i]) * k1, 2);
+      for (j = 0; j < q; j++) if (i !== j) t2 += (m[i][j] / n) * Math.pow(pc[i] + pr[j], 2);
+    }
+    var v = (t1 + k1 * k1 * t2 - Math.pow(kappa - pe * k1, 2)) / (n * Math.pow(1 - pe, 2)), se = Math.sqrt(Math.max(v, 0));
+    if (se > 0) { lo = Math.max(-1, kappa - 1.96 * se); hi = Math.min(1, kappa + 1.96 * se); }
+  }
+  var qq = Math.max(q, qTotal || q), pabak = qq >= 2 ? (qq * po - 1) / (qq - 1) : null, ac1 = null;
+  if (qq >= 2) {
+    var pg = 0;
+    for (i = 0; i < q; i++) { var pk = (pr[i] + pc[i]) / 2; pg += pk * (1 - pk); }
+    pg /= (qq - 1);
+    if (pg < 1) ac1 = (po - pg) / (1 - pg);
+  }
+  return { n: n, agree: po, kappa: kappa, lo: lo, hi: hi, pabak: pabak, ac1: ac1 };
 }
+
+/* Weighted kappa (quadratic weights) for an ORDERED scale (e.g. Killip I-IV); levels = categories in order.
+   95% CI: percentile bootstrap with a fixed seed (reproducible); null when agreement is perfect. */
+function acsKappaW(pairs, levels, B, seed) {
+  if (!pairs.length || levels.length < 2) return null;
+  var q = levels.length, idx = {}, X = [], Y = [], i;
+  for (i = 0; i < q; i++) idx[levels[i]] = i;
+  for (i = 0; i < pairs.length; i++) { var x = idx[pairs[i][0]], y = idx[pairs[i][1]]; if (x !== undefined && y !== undefined) { X.push(x); Y.push(y); } }
+  var n = X.length;
+  if (!n) return null;
+  function w(i1, j1) { return 1 - Math.pow((i1 - j1) / (q - 1), 2); }
+  function kw(ix) {
+    var m = ix.length, pa = [], pb = [], i2, j2, po = 0, pe = 0;
+    for (i2 = 0; i2 < q; i2++) { pa.push(0); pb.push(0); }
+    for (i2 = 0; i2 < m; i2++) { var k = ix[i2]; pa[X[k]]++; pb[Y[k]]++; po += w(X[k], Y[k]); }
+    po /= m;
+    for (i2 = 0; i2 < q; i2++) for (j2 = 0; j2 < q; j2++) pe += (pa[i2] / m) * (pb[j2] / m) * w(i2, j2);
+    return 1 - pe < 1e-12 ? null : (po - pe) / (1 - pe);
+  }
+  var all = [], agreeAll = true;
+  for (i = 0; i < n; i++) { all.push(i); if (X[i] !== Y[i]) agreeAll = false; }
+  var est = kw(all);
+  if (est === null) return { n: n, kappa: null, lo: null, hi: null };
+  if (agreeAll) return { n: n, kappa: est, lo: null, hi: null };
+  var rnd = acsRng(seed === undefined ? 20260101 : seed), reps = [], b, nb = B || 2000;
+  for (b = 0; b < nb; b++) {
+    var s = [];
+    for (i = 0; i < n; i++) s.push(Math.floor(rnd() * n));
+    var kb = kw(s);
+    if (kb !== null) reps.push(kb);
+  }
+  reps.sort(function (p, r) { return p - r; });
+  var L = reps.length;
+  return { n: n, kappa: est, lo: L >= 100 ? reps[Math.floor(0.025 * L)] : null, hi: L >= 100 ? reps[Math.min(L - 1, Math.ceil(0.975 * L) - 1)] : null };
+}
+
+/* ICC(2,1): two-way random effects, absolute agreement, single rater, with the McGraw & Wong (1996) 95% CI */
 function acsICC21(pairs) {
   var n = pairs.length, k = 2;
   if (n < 3) return null;
@@ -691,7 +819,16 @@ function acsICC21(pairs) {
   var mse = sse / ((n - 1) * (k - 1));
   var den = msr + (k - 1) * mse + k * (msc - mse) / n;
   if (!isFinite(den) || den === 0) return null;
-  return { n: n, icc: (msr - mse) / den };
+  var icc = (msr - mse) / den, lo = null, hi = null;
+  if (mse > 0 && icc < 0.9999) {
+    var aa = k * icc / (n * (1 - icc)), bb = 1 + k * icc * (n - 1) / (n * (1 - icc));
+    var v = Math.pow(aa * msc + bb * mse, 2) / (Math.pow(aa * msc, 2) / (k - 1) + Math.pow(bb * mse, 2) / ((n - 1) * (k - 1)));
+    var fl = acsFQuantile(0.975, n - 1, v), fu = acsFQuantile(0.975, v, n - 1);
+    var l1 = n * (msr - fl * mse) / (fl * (k * msc + (k * n - k - n) * mse) + n * msr);
+    var u1 = n * (fu * msr - mse) / (k * msc + (k * n - k - n) * mse + n * fu * msr);
+    if (isFinite(l1) && isFinite(u1)) { lo = Math.max(-1, l1); hi = Math.min(1, u1); }
+  }
+  return { n: n, icc: icc, lo: lo, hi: hi };
 }
 
 /* ======================================================================
@@ -784,6 +921,16 @@ function modal(html, onMount) {
   return root;
 }
 function closeModal() { $('modal-root').innerHTML = ''; }
+function markTest(code) {
+  if (!canEnter() || !code) return;
+  var hosp = (S.form && S.form.hosp) || S.hosp;
+  if (!confirm('تعليم الإضبارة ' + code + ' كـ «تجربة»؟\nلن تدخل في أي إحصاء أو تصدير أو مخطط STROBE، وتصير للقراءة فقط (يمكن للأدمن استعادتها).\n\nMark chart ' + code + ' as TEST? It is excluded from every statistic, export and the STROBE flow, and becomes read-only (an admin can restore it).')) return;
+  api('markTest', { hospital: hosp, code: code }).then(function () {
+    toast('عُلّمت الإضبارة «تجربة» · Chart marked as test');
+    if (S.form) { clearTimeout(S.form.asTimer); S.form.dirty = false; S.form = null; }
+    S.list = null; showTab('collect');
+  }).catch(fail);
+}
 function isAdmin() { return S.user && S.user.role === 'Admin'; }
 function canEnter() { return S.user && (S.user.role === 'Admin' || S.user.role === 'Collector'); }
 function hospName(code) {
@@ -808,14 +955,18 @@ function flushTime() {
 function fmtPct(v) { return v === null || v === undefined ? '—' : v + '%'; }
 
 /* ---------- number sanitising (English digits only) ---------- */
-function cleanNum(s, dec) {
-  var conv = false;
+function cleanNum(s, dec, keepAmb) {
+  var conv = false, amb = false;
+  /* only UNAMBIGUOUS separators are converted: Arabic decimal mark U+066B -> '.', Arabic thousands mark U+066C -> removed.
+     A plain comma (',' or U+060C) can mean either a decimal comma or a thousands separator, so it is never guessed:
+     it stays in the field (keepAmb) and is flagged, and the value is rejected at validation until the collector retypes it. */
   s = String(s).replace(/[\u0660-\u0669]/g, function (c) { conv = true; return String(c.charCodeAt(0) - 0x660); })
     .replace(/[\u06F0-\u06F9]/g, function (c) { conv = true; return String(c.charCodeAt(0) - 0x6F0); })
-    .replace(/[\u066B\u066C\u060C,]/g, '.');
-  s = s.replace(dec ? /[^0-9.]/g : /[^0-9]/g, '');
+    .replace(/\u066B/g, '.').replace(/\u066C/g, '');
+  if (keepAmb && /[,\u060C]/.test(s)) amb = true;
+  s = s.replace(keepAmb ? (dec ? /[^0-9.,\u060C]/g : /[^0-9,\u060C]/g) : (dec ? /[^0-9.]/g : /[^0-9]/g), '');
   if (dec) { var i = s.indexOf('.'); if (i >= 0) s = s.substring(0, i + 1) + s.substring(i + 1).replace(/\./g, ''); }
-  return { v: s, conv: conv };
+  return { v: s, conv: conv, amb: amb };
 }
 
 /* ======================================================================
@@ -927,22 +1078,23 @@ function recordList() {
   var h = hospName(S.hosp);
   var render1 = function () {
     var list = S.list || [];
-    var shown = list.filter(function (r) { return (S.filter === 'all' || r.status === S.filter) && (!S.q || r.patient_code.toLowerCase().indexOf(S.q.toLowerCase()) >= 0); });
-    var cnt = { all: list.length, Draft: 0, Submitted: 0, Verified: 0, Excluded: 0 };
+    var shown = list.filter(function (r) { return (S.filter === 'all' ? r.status !== 'Test' : r.status === S.filter) && (!S.q || r.patient_code.toLowerCase().indexOf(S.q.toLowerCase()) >= 0); });
+    var cnt = { all: 0, Draft: 0, Submitted: 0, Verified: 0, Excluded: 0, Test: 0 };
     list.forEach(function (r) { cnt[r.status] = (cnt[r.status] || 0) + 1; });
+    cnt.all = list.length - cnt.Test;
     var yearOpts = ACS_YEARS.map(function (y) { return '<option value="' + y + '"' + (y === S.year ? ' selected' : '') + '>' + y + '</option>'; }).join('');
     $('view').innerHTML = '<div class="card"><div class="fhead"><div><div class="ar" style="font-size:1.15rem">' + esc(h.name_ar) + '</div><div class="en">' + esc(h.name_en) + '</div></div>' +
       '<div class="row"><div><label class="l bi">' + bi('سنة الدخول', 'Admission year') + '</label><select id="yr" style="min-width:110px" dir="ltr">' + yearOpts + '</select></div>' +
       '<button class="btn" data-act="newchart">' + bi('إضبارة جديدة', 'New chart') + '</button>' +
       '<button class="btn alt" data-act="changeh">' + bi('تغيير المشفى', 'Change hospital') + '</button></div></div>' +
       '<p class="muted" style="margin-bottom:0">' + bi('افرز الإضابير بالتتابع حسب تاريخ الدخول، ولا تتخطَّ أي إضبارة مؤهلة.', 'Screen charts consecutively by admission date — do not skip any eligible chart.') + '</p></div>' +
-      '<div class="row" style="margin-bottom:10px"><div class="tabs2">' + ['all', 'Draft', 'Submitted', 'Verified', 'Excluded'].map(function (s) {
-        var nm = { all: 'الكل · All', Draft: 'مسودة · Draft', Submitted: 'مُسلَّم · Submitted', Verified: 'متحقَّق · Verified', Excluded: 'مستبعد · Excluded' }[s];
+      '<div class="row" style="margin-bottom:10px"><div class="tabs2">' + ['all', 'Draft', 'Submitted', 'Verified', 'Excluded'].concat(cnt.Test || S.filter === 'Test' ? ['Test'] : []).map(function (s) {
+        var nm = { all: 'الكل · All', Draft: 'مسودة · Draft', Submitted: 'مُسلَّم · Submitted', Verified: 'متحقَّق · Verified', Excluded: 'مستبعد · Excluded', Test: 'تجربة · Test' }[s];
         return '<button data-act="filt" data-s="' + s + '" class="' + (S.filter === s ? 'on' : '') + '">' + nm + ' (' + (cnt[s] || 0) + ')</button>';
       }).join('') + '</div><div class="grow"><input id="q" type="text" dir="ltr" placeholder="Search code · بحث بالكود" value="' + esc(S.q) + '"></div></div>' +
       '<div class="tw"><table><thead><tr><th>' + bi('الكود', 'Code') + '</th><th>' + bi('الحالة', 'Status') + '</th><th>' + bi('تاريخ الدخول', 'Admission') + '</th><th class="num">' + bi('العمر', 'Age') + '</th><th>' + bi('الجنس', 'Sex') + '</th><th>ACS</th><th class="num">S-to-D (h)</th><th>' + bi('الاكتمال', 'Completeness') + '</th><th class="num">' + bi('تنبيهات', 'Flags') + '</th><th>' + bi('آخر تعديل', 'Updated') + '</th></tr></thead><tbody>' +
       (shown.length ? shown.map(function (r) {
-        return '<tr class="clk" data-act="open" data-c="' + esc(r.patient_code) + '"><td class="code" style="font-size:.95rem">' + esc(r.patient_code) + '</td><td><span class="badge ' + r.status + '">' + r.status + '</span></td><td dir="ltr">' + esc(stat(r.admission_date)) + '</td><td class="num">' + esc(r.age_years) + '</td><td>' + esc(r.sex) + '</td><td>' + esc(r.acs_type) + '</td><td class="num">' + esc(stat(r.stod_hours)) + (r.delayed_12h === 'Yes' ? ' <span class="pill x">&gt;12h</span>' : '') + '</td><td>' + (r.completeness === 'Complete' ? '<span class="pill v">مكتمل</span>' : r.completeness === 'Incomplete' ? '<span class="pill d">غير مكتمل · ' + esc(r.nr_count) + ' NR</span>' : '') + '</td><td class="num">' + (r.flags ? '<span class="pill d">' + r.flags + '</span>' : '') + '</td><td dir="ltr">' + esc(r.updated_at) + '</td></tr>';
+        return '<tr class="clk" data-act="open" data-c="' + esc(r.patient_code) + '"><td class="code" style="font-size:.95rem">' + esc(r.patient_code) + (canEnter() && (r.status === 'Draft' || r.status === 'Submitted') ? ' <button class="btn alt small" style="margin-inline-start:6px" data-act="marktest" data-c="' + esc(r.patient_code) + '">' + bi('تجربة', 'Test') + '</button>' : '') + '</td><td><span class="badge ' + r.status + '">' + r.status + '</span></td><td dir="ltr">' + esc(stat(r.admission_date)) + '</td><td class="num">' + esc(r.age_years) + '</td><td>' + esc(r.sex) + '</td><td>' + esc(r.acs_type) + '</td><td class="num">' + esc(stat(r.stod_hours)) + (r.delayed_12h === 'Yes' ? ' <span class="pill x">&gt;12h</span>' : '') + '</td><td>' + (r.completeness === 'Complete' ? '<span class="pill v">مكتمل</span>' : r.completeness === 'Incomplete' ? '<span class="pill d">غير مكتمل · ' + esc(r.nr_count) + ' NR</span>' : '') + '</td><td class="num">' + (r.flags ? '<span class="pill d">' + r.flags + '</span>' : '') + '</td><td dir="ltr">' + esc(r.updated_at) + '</td></tr>';
       }).join('') : '<tr><td colspan="10" class="muted" style="padding:22px;text-align:center">' + bi('لا توجد سجلات بعد — ابدأ بـ «إضبارة جديدة».', 'No records yet — start with “New chart”.') + '</td></tr>') + '</tbody></table></div>';
   };
   if (S.list === null) { $('view').innerHTML = '<p class="muted">…</p>'; loadList().then(render1).catch(fail); } else render1();
@@ -983,7 +1135,7 @@ function openRecord(code) {
       vals[f.k] = x;
     });
     var yr = acsParseDate(vals.admission_date) !== null ? new Date(acsParseDate(vals.admission_date)).getUTCFullYear() : S.year;
-    var ro = rec.status === 'Excluded' || (rec.status === 'Verified' && !isAdmin()) || !canEnter();
+    var ro = rec.status === 'Excluded' || rec.status === 'Test' || (rec.status === 'Verified' && !isAdmin()) || !canEnter();
     S.form = { hosp: S.hosp, code: code, status: rec.status, year: yr, vals: vals, errs: {}, dirty: false, ro: ro, irr: false, flags: rec.qc_flags || '', exclReason: rec.exclusion_reason || '', secs: 0, total: Number(rec.entry_seconds) || 0, ver: 0 };
     S.tab = 'collect'; renderForm();
   }).catch(fail);
@@ -1035,7 +1187,7 @@ function renderForm() {
     (F.flags && !irr ? '<div class="en" style="margin-top:4px">QC: ' + esc(F.flags.split(';').join(' · ')) + '</div>' : '') +
     (F.ro && !irr ? '' : '<div class="en" style="margin-top:4px" id="tmr" title="Active time (idle time is not counted)">' + esc(timerText()) + '</div>' + (F.status === 'Draft' ? '<div class="en" style="margin-top:2px" id="autosv">' + esc('الحفظ التلقائي مفعّل · autosave on') + '</div>' : '')) + '</div></div>' +
     (irr ? '<div class="warn-box">' + bi('أنت المقيّم الثاني: أدخل القيم من الإضبارة نفسها دون الاطلاع على إدخال المقيّم الأول.', 'You are the second rater: enter the values from the chart itself. The first rater’s entries are hidden from you.') + '</div>' : '') +
-    (F.ro && !irr ? '<div class="warn-box">' + bi(F.status === 'Excluded' ? 'هذه الإضبارة مستبعدة' + (F.exclReason ? ' (' + F.exclReason + ')' : '') + ' — القراءة فقط.' : 'السجل مقفل — القراءة فقط.', F.status === 'Excluded' ? 'This chart is excluded — read only.' : 'This record is locked — read only.') + '</div>' : '') +
+    (F.ro && !irr ? '<div class="warn-box">' + (F.status === 'Test' ? bi('هذه الإضبارة معلَّمة «تجربة» ولا تدخل في أي إحصاء — القراءة فقط.', 'This chart is marked Test and is excluded from every statistic — read only.') : bi(F.status === 'Excluded' ? 'هذه الإضبارة مستبعدة' + (F.exclReason ? ' (' + F.exclReason + ')' : '') + ' — القراءة فقط.' : 'السجل مقفل — القراءة فقط.', F.status === 'Excluded' ? 'This chart is excluded — read only.' : 'This record is locked — read only.')) + '</div>' : '') +
     '<div class="snav">' + secs.map(function (s) { return '<a href="#sec_' + s.id + '" data-act="sec" data-s="' + s.id + '">' + esc(s.ar) + ' · ' + esc(s.en) + '</a>'; }).join('') + '</div></div><div id="errsum"></div>';
   secs.forEach(function (s) {
     var inSec = fields.filter(function (f) { return f.s === s.id && f.t !== 'calc'; });
@@ -1066,12 +1218,14 @@ function footHtml() {
     b += '<button class="btn" data-act="save-submit">' + bi(F.status === 'Draft' ? 'تسليم' : 'حفظ التعديلات', F.status === 'Draft' ? 'Submit' : 'Save changes') + '</button>';
     if (F.status === 'Draft') b += '<button class="btn danger" data-act="reset">' + bi('تصفير الإضبارة', 'Reset chart') + '</button>';
     b += '<button class="btn danger" data-act="excl">' + bi('استبعاد الإضبارة', 'Exclude chart') + '</button>';
+    if (F.code && (F.status === 'Draft' || F.status === 'Submitted')) b += '<button class="btn alt" data-act="marktest" data-c="' + esc(F.code) + '">' + bi('تجربة', 'Test') + '</button>';
   }
   if (isAdmin()) {
     if (F.status === 'Submitted') b += '<button class="btn alt" data-act="verify">' + bi('تحقّق وقفل', 'Verify & lock') + '</button>';
     if (F.status === 'Verified') b += '<button class="btn alt" data-act="unlock">' + bi('فتح القفل', 'Unlock') + '</button>';
-    if (F.status === 'Excluded') b += '<button class="btn alt" data-act="restore">' + bi('استعادة كمسودة', 'Restore as draft') + '</button>';
+    if (F.status === 'Excluded' || F.status === 'Test') b += '<button class="btn alt" data-act="restore">' + bi('استعادة كمسودة', 'Restore as draft') + '</button>';
   }
+  if (OFFLINE && !isAdmin() && F.status === 'Test') b += '<button class="btn alt" data-act="restore">' + bi('استعادة كمسودة', 'Restore as draft') + '</button>';
   return b;
 }
 function refreshForm() {
@@ -1133,8 +1287,10 @@ function onFieldInput(el) {
   var k = el.getAttribute('data-k'), f = ACS_FIELD_MAP[k]; if (!f || !S.form) return;
   var v = el.value;
   if (f.t === 'int' || f.t === 'num') {
-    var c = cleanNum(v, f.t === 'num');
-    if (c.v !== v) { el.value = c.v; if (c.conv) toast('حُوّلت الأرقام إلى الإنكليزية · Digits converted to English'); else if (v !== '') toast('أرقام إنكليزية 0-9 فقط · English digits 0-9 only'); }
+    var c = cleanNum(v, f.t === 'num', true);
+    if (c.v !== v) el.value = c.v;
+    if (c.amb) toast('الفاصلة غير مسموحة: اكتب 1200 للآلاف بدون فاصل، والنقطة للكسور (55.5) · No commas: type 1200 for thousands and use a dot for decimals (55.5)', true);
+    else if (c.v !== v) { el.value = c.v; if (c.conv) toast('حُوّلت الأرقام إلى الإنكليزية · Digits converted to English'); else if (v !== '') toast('أرقام إنكليزية 0-9 فقط · English digits 0-9 only'); }
     v = c.v;
   }
   S.form.vals[k] = v; markDirty(); clearErr(k); refreshForm();
@@ -1242,7 +1398,7 @@ function viewIrr() {
   var sel = S.irrHosp || (hs[0] && hs[0].code);
   S.irrHosp = sel;
   $('view').innerHTML = '<h2>' + bi('المراجعة المستقلة (اتفاق المقيّمين)', 'Independent re-abstraction (inter-rater reliability)') + '</h2>' +
-    '<p class="muted">' + bi('بحسب البروتوكول يُراجَع 5–10% من الإضابير في كل مشفى بشكل مستقل من شخص ثانٍ. تظهر هنا الإضابير المسحوبة التي لم تُدخِلها أنت.', 'Per protocol 5–10% of charts per hospital are re-abstracted independently by a second person. Charts drawn for the sample that you did not enter appear here.') + '</p>' +
+    '<p class="muted">' + bi('بحسب البروتوكول يُراجَع 10–15% من الإضابير في كل مشفى (10 إضابير على الأقل لكل مشفى) بشكل مستقل من شخص ثانٍ. تظهر هنا الإضابير المسحوبة التي لم تُدخِلها أنت.', 'Per protocol 10–15% of charts per hospital (at least 10 per hospital) are re-abstracted independently by a second person. Charts drawn for the sample that you did not enter appear here.') + '</p>' +
     '<div class="card"><div class="row"><div class="grow"><label class="l bi">' + bi('المشفى', 'Hospital') + '</label><select id="ih">' + hs.map(function (h) { return '<option value="' + esc(h.code) + '"' + (h.code === sel ? ' selected' : '') + '>' + esc(h.name_ar) + ' · ' + esc(h.name_en) + '</option>'; }).join('') + '</select></div></div></div><div id="iq"><p class="muted">…</p></div>';
   if (!sel) { $('iq').innerHTML = ''; return; }
   swr('irrQueue', { hospital: sel }).then(function (q) {
@@ -1283,6 +1439,7 @@ function viewDash() {
       '<div class="card"><h3>' + bi('مخطط STROBE (تدفق المشاركين)', 'STROBE participant flow') + '</h3><div class="flow">' +
       fbox('k', T.screened, 'إضابير مفروزة', 'Charts screened') + fbox('x', T.screenExcluded, 'مستبعدة عند الفرز', 'Excluded at screening') + fbox('k', T.entered, 'أُدخلت للتسجيل', 'Entered') +
       fbox('x', T.excludedLater, 'مستبعدة بعد الإدخال', 'Excluded after entry') + fbox('k', T.analyzed, 'مُسلَّمة / متحقَّقة', 'Submitted / verified') + fbox('g', T.primary, 'ضمن تحليل التأخر', 'In delay analysis') + '</div>' +
+      (d.test ? '<p class="muted" style="margin:8px 0 0">' + bi('إضابير «تجربة» مستبعدة من كل الأرقام أعلاه: ' + d.test, 'Test charts excluded from every figure above: ' + d.test) + '</p>' : '') +
       '<p class="muted" style="margin-bottom:0">' + T.draft + ' ' + bi('مسودة لم تُسلَّم بعد', 'drafts not yet submitted') + '</p></div>' +
       '<div class="card"><h3>' + bi('تنبيهات', 'Alerts') + '</h3>' + d.alerts.map(function (a) { return '<div class="al ' + a.level + '">' + esc(a.ar) + '<br><span class="en">' + esc(a.en) + '</span></div>'; }).join('') + '</div>' +
       '<div class="card"><h3>' + bi('حسب المشفى', 'By hospital') + '</h3><div class="tw"><table><thead><tr><th>' + bi('المشفى', 'Hospital') + '</th><th class="num">' + bi('مفروزة', 'Screened') + '</th><th class="num">' + bi('مستبعدة', 'Excl.') + '</th><th class="num">' + bi('مسودة', 'Draft') + '</th><th class="num">' + bi('مُسلَّمة', 'Submitted') + '</th><th class="num">' + bi('متحقَّقة', 'Verified') + '</th><th class="num">' + bi('تحليل التأخر', 'Delay set') + '</th><th class="num">&gt;12h</th><th class="num">≤12h</th><th class="num">' + bi('مكتملة', 'Complete') + '</th><th class="num">' + bi('غير مكتملة', 'Incomplete') + '</th><th class="num">' + bi('مكتملة للانحدار ١', 'CC Reg.1') + '</th><th class="num">' + bi('مكتملة للانحدار ٢', 'CC Reg.2') + '</th><th class="num">' + bi('فقدان LVEF', 'LVEF NR') + '</th></tr></thead><tbody>' +
@@ -1295,11 +1452,11 @@ function viewDash() {
     var rs = Object.keys(d.reasons).sort();
     h += '<div class="card"><h3>' + bi('أسباب الاستبعاد', 'Exclusion reasons') + '</h3>' + (rs.length ? '<div class="tw"><table><thead><tr><th>' + bi('السبب', 'Reason') + '</th>' + d.hospitals.map(function (x) { return '<th class="num">' + esc(x.code) + '</th>'; }).join('') + '<th class="num">' + bi('المجموع', 'Total') + '</th></tr></thead><tbody>' +
       rs.map(function (r) { return '<tr><td class="wrap">' + esc(r) + '</td>' + d.hospitals.map(function (x) { return '<td class="num">' + (x.reasons[r] || '') + '</td>'; }).join('') + '<td class="num"><b>' + d.reasons[r] + '</b></td></tr>'; }).join('') + '</tbody></table></div>' : '<span class="muted">—</span>') + '</div>';
-    h += '<div class="card"><h3>' + bi('كفاية المتغيرات (EPV)', 'Events per variable (EPV)') + '</h3><p style="margin:4px 0"><b>' + 'الانحدار ٢ · Regression 2 (MAHCE):' + '</b> <b dir="ltr">' + d.epv.m2.minority + ' / ' + d.epv.m2.df + ' ≈ ' + d.epv.m2.epv + '</b></p><p style="margin:4px 0"><b>' + 'الانحدار ١ · Regression 1 (delay):' + '</b> <b dir="ltr">' + d.epv.minority + ' / ' + d.epv.df + ' ≈ ' + (d.epv.epv === null ? '—' : d.epv.epv) + '</b> — ' + bi('الحالات في الفئة الأقل ÷ عدد المعاملات التقريبي (بعد دمج الفئات، المشافي = تأثير ثابت)', 'minority-outcome count ÷ approximate parameters (collapsed categories, hospital as fixed effect). Target ≥10, else Firth.') + '</p></div>';
+    h += '<div class="card"><h3>' + bi('كفاية المتغيرات (EPV)', 'Events per variable (EPV)') + '</h3><p style="margin:4px 0"><b>' + 'الانحدار ٢ · Regression 2 (MAHCE):' + '</b> <b dir="ltr">' + d.epv.m2.minority + ' / ' + d.epv.m2.df + ' ≈ ' + d.epv.m2.epv + '</b></p><p style="margin:4px 0"><b>' + 'الانحدار ١ · Regression 1 (delay):' + '</b> <b dir="ltr">' + d.epv.minority + ' / ' + d.epv.df + ' ≈ ' + (d.epv.epv === null ? '—' : d.epv.epv) + '</b> — ' + bi('الحالات في الفئة الأقل (على السجلات المكتملة complete-case) ÷ عدد المعاملات التقريبي (بعد دمج الفئات، المشافي = تأثير ثابت)', 'minority-outcome count among COMPLETE cases ÷ approximate parameters (collapsed categories, hospital as fixed effect). Target ≥10, else Firth.') + '</p></div>';
     h += '<div class="card"><h3>' + bi('نسبة NR لكل متغير (للتحليل الكامل Complete-case)', 'NR proportion per variable (complete-case table)') + '</h3><div class="tw"><table><thead><tr><th>' + bi('المتغير', 'Variable') + '</th><th class="num">n</th><th class="num">NR</th><th class="num">%</th>' + d.hospitals.map(function (x) { return '<th class="num">' + esc(x.code) + '</th>'; }).join('') + '</tr></thead><tbody>' +
       d.missing.map(function (m) { return '<tr><td class="wrap">' + esc(m.ar) + ' <span class="en">' + esc(m.k) + '</span></td><td class="num">' + m.n + '</td><td class="num">' + m.nr + '</td><td class="num ' + heat(m.pct) + '">' + fmtPct(m.pct) + '</td>' + d.hospitals.map(function (x) { var p = m.byHosp[x.code]; return '<td class="num ' + heat(p) + '">' + (p === null ? '' : p + '%') + '</td>'; }).join('') + '</tr>'; }).join('') + '</tbody></table></div></div>';
-    h += '<div class="card"><h3>' + bi('اتفاق المقيّمين (Kappa / ICC)', 'Inter-rater agreement (Kappa / ICC)') + '</h3><p class="muted" style="margin-top:0">' + bi('تقدير أولي للمتابعة؛ يُحسب الاعتماد النهائي مع فترات الثقة من التصدير «irr_pairs».', 'Monitoring estimate only; compute final values with CIs from the “irr_pairs” export.') + '</p><div class="tw"><table><thead><tr><th>' + bi('المتغير', 'Variable') + '</th><th>' + bi('النوع', 'Type') + '</th><th class="num">n</th><th class="num">% agree</th><th class="num">κ / ICC</th></tr></thead><tbody>' +
-      d.irr.map(function (r) { return '<tr><td class="wrap">' + esc(r.ar) + ' <span class="en">' + esc(r.k) + '</span></td><td>' + (r.type === 'categorical' ? 'κ' : 'ICC(2,1)') + '</td><td class="num">' + r.n + '</td><td class="num">' + (r.agree === null ? '' : Math.round(r.agree * 100) + '%') + '</td><td class="num">' + (r.stat === null ? '—' : (Math.round(r.stat * 100) / 100)) + '</td></tr>'; }).join('') + '</tbody></table></div></div>';
+    h += '<div class="card"><h3>' + bi('اتفاق المقيّمين (Kappa / ICC)', 'Inter-rater agreement (Kappa / ICC)') + '</h3><p class="muted" style="margin-top:0">' + bi('تقدير أولي للمتابعة؛ يُحسب الاعتماد النهائي مع فترات الثقة من التصدير «irr_pairs».', 'Monitoring estimate only; compute final values with CIs from the “irr_pairs” export.') + '</p><div class="tw"><table><thead><tr><th>' + bi('المتغير', 'Variable') + '</th><th>' + bi('النوع', 'Type') + '</th><th class="num">n</th><th class="num">% agree</th><th class="num">κ / ICC [95% CI]</th><th class="num">PABAK</th><th class="num">AC1</th></tr></thead><tbody>' +
+      d.irr.map(function (r) { return '<tr><td class="wrap">' + esc(r.ar) + ' <span class="en">' + esc(r.k) + '</span></td><td>' + (r.type === 'categorical' ? 'κ' : r.type === 'ordinal' ? 'κw' : 'ICC(2,1)') + '</td><td class="num">' + r.n + '</td><td class="num">' + (r.agree === null ? '' : Math.round(r.agree * 100) + '%') + '</td><td class="num" dir="ltr">' + (r.stat === null ? '—' : (Math.round(r.stat * 100) / 100)) + ((r.lo === null || r.lo === undefined || r.hi === null || r.hi === undefined) ? '' : ' [' + (Math.round(r.lo * 100) / 100) + ', ' + (Math.round(r.hi * 100) / 100) + ']') + '</td><td class="num">' + ((r.pabak === null || r.pabak === undefined) ? '' : (Math.round(r.pabak * 100) / 100)) + '</td><td class="num">' + ((r.ac1 === null || r.ac1 === undefined) ? '' : (Math.round(r.ac1 * 100) / 100)) + '</td></tr>'; }).join('') + '</tbody></table></div></div>';
     $('view').innerHTML = h;
   }).catch(fail);
 }
@@ -1511,7 +1668,7 @@ function adminSub() {
     var c = S.boot.config;
     el.innerHTML = '<div class="card"><h3>' + bi('إعدادات الدراسة', 'Study settings') + '</h3><div class="row">' +
       '<div><label class="l bi">' + bi('الحد الأدنى للعينة', 'Minimum sample') + '</label><input id="cs" type="text" dir="ltr" inputmode="numeric" value="' + esc(c.min_sample) + '"></div>' +
-      '<div><label class="l bi">' + bi('نسبة عينة IRR %', 'IRR sample %') + '</label><input id="ci" type="text" dir="ltr" inputmode="numeric" value="' + esc(c.irr_pct) + '"></div>' +
+      '<div><label class="l bi">' + bi('نسبة عينة IRR % (10–15)', 'IRR sample % (10–15)') + '</label><input id="ci" type="text" dir="ltr" inputmode="numeric" value="' + esc(c.irr_pct) + '"></div>' +
       '<div class="grow"><label class="l bi">' + bi('جهة التواصل (تظهر في الدليل)', 'Contact (shown in the guide)') + '</label><input id="cc" type="text" value="' + esc(c.contact) + '"></div>' +
       '<div><label class="l bi">' + bi('تنبيه المزامنة بعد (ساعات)', 'Sync warning after (hours)') + '</label><input id="cw" type="text" dir="ltr" inputmode="numeric" value="' + esc(c.sync_warn_hours) + '"></div>' +
       '<div><label class="l bi">' + bi('منع إضبارة جديدة بعد (ساعات، 0=إيقاف)', 'Block new charts after (hours, 0=off)') + '</label><input id="cb" type="text" dir="ltr" inputmode="numeric" value="' + esc(c.sync_block_hours) + '"></div>' +
@@ -1521,7 +1678,7 @@ function adminSub() {
       (c.locked_at ? '<div class="warn-box">' + bi('مقفلة منذ ' + c.locked_at, 'Locked since ' + c.locked_at) + '</div><button class="btn alt" data-act="lockdb" data-v="0">' + bi('فتح القفل', 'Unlock') + '</button>' : '<button class="btn danger" data-act="lockdb" data-v="1">' + bi('قفل القاعدة الآن', 'Lock now') + '</button>') + '</div>' +
       '<div class="card"><h3>' + bi('نسخة احتياطية', 'Backup') + '</h3><p class="muted">' + bi('تنسخ الجدول كاملاً إلى مجلد ACS_Backups في Drive (تُحفظ آخر ٣٠ نسخة).', 'Copies the whole spreadsheet to the Drive folder ACS_Backups (last 30 kept).') + '</p><button class="btn alt" data-act="backup">' + bi('نسخ احتياطي الآن', 'Back up now') + '</button></div>';
   } else if (s === 'irr') {
-    el.innerHTML = '<div class="card"><h3>' + bi('سحب عينة اتفاق المقيّمين', 'Draw the reliability sample') + '</h3><p class="muted">' + bi('يسحب عشوائياً نسبة من السجلات المُسلَّمة في كل مشفى (5–30%)، ثم يراجعها مُدخِل آخر بشكل أعمى. كرّر السحب مع زيادة العينة؛ ما سُحب سابقاً يبقى.', 'Randomly selects a share of submitted records per hospital (5–30%); a different collector then re-abstracts them blind. Re-run as the sample grows; earlier picks are kept.') + '</p>' +
+    el.innerHTML = '<div class="card"><h3>' + bi('سحب عينة اتفاق المقيّمين', 'Draw the reliability sample') + '</h3><p class="muted">' + bi('يسحب عشوائياً نسبة من السجلات المُسلَّمة في كل مشفى (10–30%، وبحد أدنى 10 سجلات لكل مشفى)، ثم يراجعها مُدخِل آخر بشكل أعمى. كرّر السحب مع زيادة العينة؛ ما سُحب سابقاً يبقى.', 'Randomly selects a share of submitted records per hospital (10–30%, at least 10 records per hospital); a different collector then re-abstracts them blind. Re-run as the sample grows; earlier picks are kept.') + '</p>' +
       '<div class="row"><div><label class="l bi">' + bi('النسبة %', 'Percent') + '</label><input id="ip" type="text" dir="ltr" inputmode="numeric" value="' + esc(S.boot.config.irr_pct) + '" style="width:90px"></div><button class="btn" data-act="genirr">' + bi('سحب العينة', 'Draw sample') + '</button></div><div id="ires"></div>' +
       '<p class="muted">' + bi('ملاحظة البروتوكول: جرّب النموذج على ٢٠–٣٠ إضبارة قبل بدء الجمع الكامل.', 'Protocol note: pilot the form on 20–30 charts before full-scale collection.') + '</p></div>';
   } else {
@@ -1607,24 +1764,24 @@ function guideInner(tokens) {
     '<div class="card"><h3>' + bi('١. عن الدراسة', '1. About the study') + '</h3>' +
     pair('<p><b>العنوان:</b> محددات التأخر قبل الوصول إلى المشفى لدى مرضى المتلازمة الإكليلية الحادة (ACS) وتأثيره على النتائج داخل المشفى في نظام صحي متأثر بالنزاع: دراسة أترابية سورية متعددة المراكز.</p><p><b>التصميم:</b> دراسة أترابية راجعة متعددة المراكز، مصدر البيانات الإضابير الطبية فقط (لا استبيان للمرضى).</p><p><b>الجامعة:</b> الجامعة الخاصة السورية (SPU) — دمشق.</p>',
       '<p><b>Title:</b> Predictors and Prognostic Impact of Prehospital Delay Among Patients With Acute Coronary Syndrome in a Conflict-Affected Healthcare System: A Multicenter Syrian Cohort Study.</p><p><b>Design:</b> multicenter retrospective cohort; medical-record review only — no patient questionnaire.</p><p><b>Institution:</b> Syrian Private University (SPU), Damascus.</p>') +
-    pair('<p><b>الأهداف:</b> (١) تحديد محددات التأخر (>12 ساعة) لدى مرضى ACS في سوريا. (٢) تقييم تأثير التأخر على النتائج داخل المشفى (MAHCE). السياق (النزاع) خلفية وصفية وليس هدفاً رسمياً.</p><p><b>المراكز الحالية:</b> ' + (tokens ? '{{hospitals}}' : (hs || '—')) + '</p><p><b>حجم العينة:</b> حد أدنى <b>' + (cfg.min_sample || 600) + '</b> مريض في المجموع، بلا حد أعلى.</p><p><b>سنة الدخول:</b> من 2020 إلى 2026؛ المتوقع 2026 غالباً وقد تُستخدم 2025 احتياطاً.</p>',
-      '<p><b>Aims:</b> (1) identify predictors of prehospital delay (&gt;12 h) among ACS patients in Syria; (2) evaluate the prognostic impact of delay on in-hospital outcomes (MAHCE). The conflict context is descriptive background, not a formal aim.</p><p><b>Current centers:</b> see Arabic column.</p><p><b>Sample size:</b> minimum <b>' + (cfg.min_sample || 600) + '</b> patients overall, open upper limit.</p><p><b>Admission year:</b> 2020–2026; most likely 2026, with 2025 as backup.</p>') + '</div>' +
+    pair('<p><b>الأهداف:</b> (١) تحديد محددات التأخر (>12 ساعة) لدى مرضى ACS في سوريا. (٢) تقييم تأثير التأخر على النتائج داخل المشفى (MAHCE). السياق (النزاع) خلفية وصفية وليس هدفاً رسمياً.</p><p><b>المراكز الحالية:</b> ' + (tokens ? '{{hospitals}}' : (hs || '—')) + '</p><p><b>حجم العينة:</b> حد أدنى <b>' + (cfg.min_sample || 600) + '</b> مريض وقت بدء أعراضهم موثق، بلا حد أعلى.</p><p><b>سنة الدخول:</b> من 2020 إلى 2026؛ المتوقع 2026 غالباً وقد تُستخدم 2025 احتياطاً.</p>',
+      '<p><b>Aims:</b> (1) identify predictors of prehospital delay (&gt;12 h) among ACS patients in Syria; (2) evaluate the prognostic impact of delay on in-hospital outcomes (MAHCE). The conflict context is descriptive background, not a formal aim.</p><p><b>Current centers:</b> see Arabic column.</p><p><b>Sample size:</b> minimum <b>' + (cfg.min_sample || 600) + '</b> patients with a documented onset time, open upper limit.</p><p><b>Admission year:</b> 2020–2026; most likely 2026, with 2025 as backup.</p>') + '</div>' +
     '<div class="card"><h3>' + bi('٢. التعريفات الأساسية', '2. Key definitions') + '</h3>' +
-    pair('<ul><li><b>التأخر:</b> أكثر من 12 ساعة بين بدء الأعراض والوصول إلى الإسعاف (S-to-D). 12 ساعة بالضبط = مبكر. يُحلَّل أيضاً كمتغير متصل.</li><li><b>ACS:</b> STEMI (ارتفاع ST + تروبونين إيجابي)، NSTEMI (دون ارتفاع ST + تروبونين إيجابي)، UA (تروبونين سلبي).</li><li><b>Killip:</b> I لا قصور · II خراخر أو S3 · III وذمة رئة · IV صدمة قلبية.</li><li><b>LVEF:</b> ≥50% محفوظة · 40–49% منخفضة قليلاً · &lt;40% منخفضة.</li><li><b>MAHCE (النقطة الأساسية):</b> نعم إذا حدث أي مما يلي: وفاة داخل المشفى، صدمة قلبية، VT/VF مستمر، قصور قلب حديث، عناية مركزة، أو LVEF &lt;40%.</li><li><b>NR:</b> غير مسجل في الإضبارة — <u>لا تخمّن ولا تقدّر أبداً</u>.</li></ul>',
-      '<ul><li><b>Delay:</b> &gt;12 h from symptom onset to ED arrival (S-to-D); exactly 12 h = early. Also analysed as continuous.</li><li><b>ACS:</b> STEMI (ST elevation + troponin+), NSTEMI (no ST elevation + troponin+), UA (troponin−).</li><li><b>Killip:</b> I no HF · II rales/S3 · III pulmonary edema · IV cardiogenic shock.</li><li><b>LVEF:</b> ≥50% preserved · 40–49% mildly reduced · &lt;40% reduced.</li><li><b>MAHCE (primary):</b> yes if any of in-hospital death, cardiogenic shock, sustained VT/VF, new heart failure, ICU admission, or LVEF &lt;40%.</li><li><b>NR:</b> not recorded in the chart — <u>never guess or estimate</u>.</li></ul>') + '</div>' +
+    pair('<ul><li><b>التأخر:</b> أكثر من 12 ساعة بين بدء الأعراض والوصول إلى الإسعاف (S-to-D). 12 ساعة بالضبط = مبكر. يُحلَّل أيضاً كمتغير متصل.</li><li><b>ACS:</b> STEMI (ارتفاع ST + تروبونين إيجابي)، NSTEMI (دون ارتفاع ST مستمر + تروبونين إيجابي)، UA (دون ارتفاع ST مستمر + تروبونين سلبي). إذا لم توجد نتيجة تروبونين بالإضبارة سجّل NR: يُقبل STEMI (تشخيص بالتخطيط)، أما NSTEMI وUA فتُستبعد الإضبارة (ACS غير مؤكد).</li><li><b>Killip:</b> I لا قصور · II خراخر أو S3 · III وذمة رئة · IV صدمة قلبية.</li><li><b>LVEF:</b> ≥50% محفوظة · 40–49% منخفضة قليلاً · &lt;40% منخفضة.</li><li><b>MAHCE (النقطة الأساسية):</b> نعم إذا حدث أي مما يلي: وفاة داخل المشفى، صدمة قلبية، VT/VF مستمر، قصور قلب حديث، عناية مركزة، أو LVEF &lt;40%.</li><li><b>NR:</b> غير مسجل في الإضبارة — <u>لا تخمّن ولا تقدّر أبداً</u>.</li></ul>',
+      '<ul><li><b>Delay:</b> &gt;12 h from symptom onset to ED arrival (S-to-D); exactly 12 h = early. Also analysed as continuous.</li><li><b>ACS:</b> STEMI (ST elevation + troponin+), NSTEMI (no persistent ST elevation + troponin+), UA (no persistent ST elevation + troponin−). If the chart has no troponin result record NR: STEMI is accepted (ECG diagnosis); NSTEMI/UA are excluded (ACS not confirmed).</li><li><b>Killip:</b> I no HF · II rales/S3 · III pulmonary edema · IV cardiogenic shock.</li><li><b>LVEF:</b> ≥50% preserved · 40–49% mildly reduced · &lt;40% reduced.</li><li><b>MAHCE (primary):</b> yes if any of in-hospital death, cardiogenic shock, sustained VT/VF, new heart failure, ICU admission, or LVEF &lt;40%.</li><li><b>NR:</b> not recorded in the chart — <u>never guess or estimate</u>.</li></ul>') + '</div>' +
     '<div class="card"><h3>' + bi('٣. معايير الشمول والاستبعاد', '3. Eligibility') + '</h3>' +
-    pair('<p><b>الشمول:</b> بالغ ≥١٨ سنة · ACS مؤكد حسب ACC/AHA 2025 · دخول ضمن فترة الدراسة · وقت بدء الأعراض موثق (دقيق أو تقريبي).</p><p><b>الاستبعاد:</b> سجل ناقص (نوع ACS أو التوقيت أو النتائج) · محوَّل من مشفى آخر · فشل كلوي نهائي على الغسيل · ورم خبيث فعّال · قصور قلب NYHA IV سابق · احتشاء صامت مكتشف بالصدفة.</p>',
-      '<p><b>Include:</b> adult ≥18 · confirmed ACS (ACC/AHA 2025) · admitted in the study period · symptom-onset time documented (exact or approximate).</p><p><b>Exclude:</b> incomplete record (ACS type, timing or outcomes missing) · transferred from another hospital · ESRD on dialysis · active malignancy · pre-existing NYHA IV heart failure · silent MI found incidentally.</p>') + '</div>' +
+    pair('<p><b>الشمول:</b> بالغ ≥١٨ سنة · ACS مؤكد حسب ACC/AHA 2025 · دخول ضمن فترة الدراسة · وقت بدء الأعراض موثق (دقيق أو تقريبي) لتحليل التأخر — والإضبارة بلا وقت بدء <b>لا تُستبعد</b>: تُدخَل كاملة (جودة التوثيق «المريض غير قادر على التحديد» أو NR) وتُقارَن بالمحلَّلين.</p><p><b>الاستبعاد:</b> سجل ناقص (نوع ACS أو وقت الوصول أو النتائج) · NSTEMI أو UA بلا نتيجة تروبونين (ACS غير مؤكد) · محوَّل من مشفى آخر · فشل كلوي نهائي على الغسيل · ورم خبيث فعّال · قصور قلب NYHA IV سابق · احتشاء صامت مكتشف بالصدفة.</p>',
+      '<p><b>Include:</b> adult ≥18 · confirmed ACS (ACC/AHA 2025) · admitted in the study period · symptom-onset time documented (exact or approximate) for the delay analyses — a chart without onset time is <b>not excluded</b>: enter it completely (documentation quality “unable to specify” or NR); it is compared with the analysed patients.</p><p><b>Exclude:</b> incomplete record (ACS type, ED arrival time or outcomes missing) · NSTEMI/UA with no troponin result (ACS not confirmed) · transferred from another hospital · ESRD on dialysis · active malignancy · pre-existing NYHA IV heart failure · silent MI found incidentally.</p>') + '</div>' +
     '<div class="card"><h3>' + bi('٤. خطوات العمل', '4. How to collect') + '</h3>' +
-    pair('<ol><li>اختر <b>المشفى</b> أولاً (كل مشفى بياناته منفصلة)، ثم اختر <b>سنة الدخول</b>.</li><li>اضغط <b>إضبارة جديدة</b> وافرز الإضبارة: مؤهلة أم مستبعدة؟ الاستبعاد يُسجَّل بسببه فقط بلا بيانات سريرية.</li><li>للمؤهلة يُنشأ <b>كود</b> تلقائي (مثل MUJ-0001). دوّنه بجانب رقم الإضبارة في <u>سجلّك الورقي المحلي فقط</u>. (بوضع الأوفلاين يكون الكود <b>مؤقتاً</b> TMP-… فدوّنه أيضاً، وبعد المزامنة اكتب الكود الرسمي بجانبه.)</li><li>أدخل البيانات حسب الأقسام السبعة. استخدم <b>حفظ كمسودة</b> متى شئت، و<b>تسليم</b> عند الاكتمال.</li><li>التنبيهات الصفراء (مثل STEMI مع تروبونين سلبي) تحتاج تأكيدك بعد مراجعة الإضبارة؛ تُحفظ مع السجل.</li><li>المشرف يتحقق من السجلات ويقفلها (<b>Verified</b>). لا شيء يُحذف نهائياً؛ التعديلات مسجلة.</li></ol>',
-      '<ol><li>Choose the <b>hospital</b> first (each hospital has its own dataset), then the <b>admission year</b>.</li><li>Press <b>New chart</b> and screen it: eligible or excluded? Exclusions are logged with their reason only — no clinical data.</li><li>Eligible charts get an automatic <b>code</b> (e.g. MUJ-0001). Note it next to the file number in <u>your local paper log only</u>. (Offline the code is <b>temporary</b>, TMP-…: note it too, and after syncing write the official code beside it.)</li><li>Enter data section by section. <b>Save draft</b> any time; <b>Submit</b> when complete.</li><li>Yellow warnings (e.g. STEMI with negative troponin) need your confirmation after re-checking the chart; they are stored with the record.</li><li>The admin verifies and locks records (<b>Verified</b>). Nothing is permanently deleted; every change is logged.</li></ol>') + '</div>' +
+    pair('<ol><li>اختر <b>المشفى</b> أولاً (كل مشفى بياناته منفصلة)، ثم اختر <b>سنة الدخول</b>.</li><li>اضغط <b>إضبارة جديدة</b> وافرز الإضبارة: مؤهلة أم مستبعدة؟ الاستبعاد يُسجَّل بسببه فقط بلا بيانات سريرية.</li><li>للمؤهلة يُنشأ <b>كود</b> تلقائي (مثل MUJ-0001). دوّنه بجانب رقم الإضبارة في <u>سجلّك الورقي المحلي فقط</u>. (بوضع الأوفلاين يكون الكود <b>مؤقتاً</b> TMP-… فدوّنه أيضاً، وبعد المزامنة اكتب الكود الرسمي بجانبه.)</li><li>أدخل البيانات حسب الأقسام السبعة. استخدم <b>حفظ كمسودة</b> متى شئت، و<b>تسليم</b> عند الاكتمال.</li><li>التنبيهات الصفراء (مثل STEMI مع تروبونين سلبي) تحتاج تأكيدك بعد مراجعة الإضبارة؛ تُحفظ مع السجل.</li><li>المشرف يتحقق من السجلات ويقفلها (<b>Verified</b>). لا شيء يُحذف نهائياً؛ التعديلات مسجلة. الإضبارة التجريبية تُعلَّم بزر «تجربة» فتخرج من كل الإحصاءات.</li></ol>',
+      '<ol><li>Choose the <b>hospital</b> first (each hospital has its own dataset), then the <b>admission year</b>.</li><li>Press <b>New chart</b> and screen it: eligible or excluded? Exclusions are logged with their reason only — no clinical data.</li><li>Eligible charts get an automatic <b>code</b> (e.g. MUJ-0001). Note it next to the file number in <u>your local paper log only</u>. (Offline the code is <b>temporary</b>, TMP-…: note it too, and after syncing write the official code beside it.)</li><li>Enter data section by section. <b>Save draft</b> any time; <b>Submit</b> when complete.</li><li>Yellow warnings (e.g. STEMI with negative troponin) need your confirmation after re-checking the chart; they are stored with the record.</li><li>The admin verifies and locks records (<b>Verified</b>). Nothing is permanently deleted; every change is logged. A practice chart is marked with the Test button and drops out of every statistic.</li></ol>') + '</div>' +
     '<div class="card"><h3>' + bi('٥. قواعد الإدخال', '5. Entry rules') + '</h3>' +
-    pair('<ul><li><b>الأرقام بالإنكليزية فقط (0-9).</b> إذا كتبت أرقاماً عربية تُحوَّل تلقائياً. الحسابات تعتمد عليها.</li><li>كل الحقول إلزامية: أدخل القيمة أو اختر <b>NR</b> إن لم تكن مسجلة. لا تترك فراغاً.</li><li>الحقول المرتبطة بشرط (مثل زمن البالون) تظهر وتختفي تلقائياً وتُخزَّن <b>N/A</b> إن لم تنطبق.</li><li>الوقت بنظام 24 ساعة كما في الإضبارة. إذا كان وقت البدء غير موثق اختر جودة التوثيق المناسبة؛ يُترك S-to-D فارغاً ويُستثنى السجل من تحليل التأخر.</li><li>لا تكتب أسماء أو أرقام هواتف أو أرقام هوية في الملاحظات — الموقع يرفضها.</li><li><b>الحفظ التلقائي:</b> المسودة تُحفظ تلقائياً أثناء الكتابة، فإذا تركتها وعدت لها لاحقاً تجد ما أدخلته؛ تكمل أو تضغط <b>تصفير الإضبارة</b> لتبدأ من الصفر (يطلب تأكيداً).</li><li><b>المعلومة غير الموجودة بالإضبارة لا تُعبَّأ ولا تُقدَّر:</b> سجّلها NR. يُصنِّف الموقع السجل تلقائياً «مكتمل» أو «غير مكتمل» (مع عدد وأسماء حقول NR).</li></ul>',
-      '<ul><li><b>English digits only (0-9).</b> Arabic digits are converted automatically; calculations depend on them.</li><li>Every field is required: enter the value or choose <b>NR</b> if not recorded. Never leave blanks.</li><li>Conditional fields (e.g. door-to-balloon) appear/disappear automatically and are stored as <b>N/A</b> when not applicable.</li><li>Use 24-hour time as in the chart. If onset time is not documented choose the right documentation quality; S-to-D stays empty and the record is left out of the delay analysis.</li><li>Never type names, phone numbers or ID numbers in notes — the site rejects them.</li><li><b>Autosave:</b> a draft is saved automatically while you type, so if you leave and come back later your entries are there; continue, or press <b>Reset chart</b> to start from zero (it asks for confirmation).</li><li><b>Information missing from the chart is never filled in or estimated:</b> record it as NR. The site automatically classifies the record as Complete or Incomplete (with the number and names of NR fields).</li></ul>') + '</div>' +
+    pair('<ul><li><b>الأرقام بالإنكليزية فقط (0-9).</b> إذا كتبت أرقاماً عربية تُحوَّل تلقائياً. الحسابات تعتمد عليها. لا فاصلة ولا فاصل آلاف: اكتب 1200 وليس 1,200، والنقطة للكسور العشرية (55.5).</li><li>كل الحقول إلزامية: أدخل القيمة أو اختر <b>NR</b> إن لم تكن مسجلة. لا تترك فراغاً.</li><li>التعليم والوظيفة نادراً ما يُسجَّلان في الإضابير: اختر <b>NR</b> ولا تخمّن؛ وهما ليسا في النموذج الأساسي (يُعرضان وصفياً وفي تحليل استكشافي).</li><li>الحقول المرتبطة بشرط (مثل زمن البالون) تظهر وتختفي تلقائياً وتُخزَّن <b>N/A</b> إن لم تنطبق.</li><li>الوقت بنظام 24 ساعة كما في الإضبارة. إذا كان وقت البدء غير موثق اختر جودة التوثيق المناسبة؛ يُترك S-to-D فارغاً ويُستثنى السجل من تحليل التأخر.</li><li>لا تكتب أسماء أو أرقام هواتف أو أرقام هوية في الملاحظات — الموقع يرفضها.</li><li><b>الحفظ التلقائي:</b> المسودة تُحفظ تلقائياً أثناء الكتابة، فإذا تركتها وعدت لها لاحقاً تجد ما أدخلته؛ تكمل أو تضغط <b>تصفير الإضبارة</b> لتبدأ من الصفر (يطلب تأكيداً).</li><li><b>المعلومة غير الموجودة بالإضبارة لا تُعبَّأ ولا تُقدَّر:</b> سجّلها NR. يُصنِّف الموقع السجل تلقائياً «مكتمل» أو «غير مكتمل» بحسب متغيرات التحليل فقط؛ ويُعرض عدد وأسماء كل حقول NR للمتابعة.</li></ul>',
+      '<ul><li><b>English digits only (0-9).</b> Arabic digits are converted automatically; calculations depend on them. No commas or thousands separators: type 1200, not 1,200; use a dot for decimals (55.5).</li><li>Every field is required: enter the value or choose <b>NR</b> if not recorded. Never leave blanks.</li><li>Education and occupation are rarely recorded in charts: choose <b>NR</b>, never guess; they are not in the primary model (reported descriptively and in an exploratory analysis).</li><li>Conditional fields (e.g. door-to-balloon) appear/disappear automatically and are stored as <b>N/A</b> when not applicable.</li><li>Use 24-hour time as in the chart. If onset time is not documented choose the right documentation quality; S-to-D stays empty and the record is left out of the delay analysis.</li><li>Never type names, phone numbers or ID numbers in notes — the site rejects them.</li><li><b>Autosave:</b> a draft is saved automatically while you type, so if you leave and come back later your entries are there; continue, or press <b>Reset chart</b> to start from zero (it asks for confirmation).</li><li><b>Information missing from the chart is never filled in or estimated:</b> record it as NR. The site automatically classifies the record as Complete or Incomplete based on the variables used in the analyses only; the number and names of all NR fields are shown for monitoring.</li></ul>') + '</div>' +
     '<div class="card"><h3>' + bi('٦. المتغيرات المحسوبة تلقائياً', '6. Automatically calculated variables') + '</h3><div class="tw"><table><thead><tr><th>' + bi('المتغير', 'Variable') + '</th><th>' + bi('القاعدة', 'Rule') + '</th></tr></thead><tbody>' + calcRows + '</tbody></table></div></div>' +
     '<div class="card"><h3>' + bi('٧. الخصوصية والجودة', '7. Privacy & quality') + '</h3>' +
-    pair('<ul><li>لا تُخزَّن أي معرّفات مباشرة: لا اسم، ولا تاريخ ميلاد، ولا رقم إضبارة، ولا هاتف. المريض يُعرَّف بكود فقط.</li><li>الاتصال مشفّر (HTTPS) والتخزين مشفّر لدى Google؛ الوصول بحسابات شخصية مع قفل بعد محاولات فاشلة، وتُسجَّل كل العمليات.</li><li>جمع متتابع (consecutive) لكل الإضابير المؤهلة لتقليل التحيز، مع مخطط STROBE تلقائي.</li><li>5–10% من الإضابير تُراجَع بشكل مستقل من مُدخِل ثانٍ (Kappa / ICC).</li><li>التصدير للمشاركة العامة مجهّل بلا تواريخ، تماشياً مع سياسات إتاحة البيانات في المجلات.</li><li>يُسجَّل وقت الإدخال الفعلي لكل مستخدم (دون محتوى ما كُتب) لمتابعة الجودة؛ وقت الخمول لا يُحسب.</li></ul>',
-      '<ul><li>No direct identifiers are stored — no name, date of birth, file number or phone. Patients are identified by code only.</li><li>Connection is encrypted (HTTPS) and storage is encrypted by Google; personal accounts, lock-out after failed attempts, and every action is logged.</li><li>Consecutive screening of all eligible charts to limit selection bias, with an automatic STROBE flow.</li><li>5–10% of charts are independently re-abstracted by a second collector (Kappa / ICC).</li><li>The public export is de-identified with no dates, in line with journal data-availability policies.</li><li>Active entry time is recorded per user (not what was typed) for quality monitoring; idle time is not counted.</li></ul>') +
+    pair('<ul><li>لا تُخزَّن أي معرّفات مباشرة: لا اسم، ولا تاريخ ميلاد، ولا رقم إضبارة، ولا هاتف. المريض يُعرَّف بكود فقط.</li><li>الاتصال مشفّر (HTTPS) والتخزين مشفّر لدى Google؛ الوصول بحسابات شخصية مع قفل بعد محاولات فاشلة، وتُسجَّل كل العمليات.</li><li>جمع متتابع (consecutive) لكل الإضابير المؤهلة لتقليل التحيز، مع مخطط STROBE تلقائي.</li><li>10–15% من الإضابير (10 على الأقل لكل مشفى) تُراجَع بشكل مستقل من مُدخِل ثانٍ (Kappa / ICC).</li><li>التصدير للمشاركة العامة مجهّل بلا تواريخ، تماشياً مع سياسات إتاحة البيانات في المجلات.</li><li>يُسجَّل وقت الإدخال الفعلي لكل مستخدم (دون محتوى ما كُتب) لمتابعة الجودة؛ وقت الخمول لا يُحسب.</li></ul>',
+      '<ul><li>No direct identifiers are stored — no name, date of birth, file number or phone. Patients are identified by code only.</li><li>Connection is encrypted (HTTPS) and storage is encrypted by Google; personal accounts, lock-out after failed attempts, and every action is logged.</li><li>Consecutive screening of all eligible charts to limit selection bias, with an automatic STROBE flow.</li><li>10–15% of charts (at least 10 per hospital) are independently re-abstracted by a second collector (Kappa / ICC).</li><li>The public export is de-identified with no dates, in line with journal data-availability policies.</li><li>Active entry time is recorded per user (not what was typed) for quality monitoring; idle time is not counted.</li></ul>') +
     (cfg.contact ? '<p><b>' + 'للتواصل · Contact:' + '</b> ' + esc(cfg.contact) + '</p>' : '') + '</div>';
   if (tokens) out = out.replace(/<div class="tw"><table>[\s\S]*?<\/table><\/div>/, '<p>{{calc_table}}</p>');
   return out;
@@ -1657,6 +1814,7 @@ document.addEventListener('click', function (ev) {
     case 'sc-back': $('sc2').classList.add('hide'); $('sc1').classList.remove('hide'); break;
     case 'sc-exc2': var rr = pickedReason(); if (rr) doScreen('Excluded', rr); break;
     case 'closem': closeModal(); break;
+    case 'marktest': markTest(t.getAttribute('data-c')); break;
     case 'open': openRecord(t.getAttribute('data-c')); break;
     case 'back': if (leaveForm()) { var wasIrr = S.form && S.form.irr; S.form = null; if (wasIrr) viewIrr(); else { recordList(); loadList().then(function () { if (S.tab === 'collect' && !S.form && S.hosp) recordList(); }).catch(function () { }); } } break;
     case 'save-draft': collectNow('draft'); break;
@@ -1801,10 +1959,11 @@ function itemPutRaw(r) { return idbOp('items', 'readwrite', function (s) { retur
 function itemDel(id) { return idbOp('items', 'readwrite', function (s) { return s.delete(id); }); }
 
 /* ---------- AES-GCM with a passphrase-derived key ---------- */
-function deriveKey(pass, saltB64) {
+var OFF_ITER = 600000;   /* PBKDF2 iterations for NEW activations; each device stores its own count ('iter'); devices activated before this change keep 200000 */
+function deriveKey(pass, saltB64, iter) {
   var enc = new TextEncoder();
   return crypto.subtle.importKey('raw', enc.encode(pass), 'PBKDF2', false, ['deriveKey']).then(function (base) {
-    return crypto.subtle.deriveKey({ name: 'PBKDF2', salt: b64d(saltB64), iterations: 200000, hash: 'SHA-256' }, base, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
+    return crypto.subtle.deriveKey({ name: 'PBKDF2', salt: b64d(saltB64), iterations: iter || 200000, hash: 'SHA-256' }, base, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
   });
 }
 function encJson(key, obj) {
@@ -1828,8 +1987,8 @@ function applyUnlocked() {
   S.mustChange = false;
 }
 function offUnlock(pass) {
-  var salt, chk;
-  return kvGet('salt').then(function (s) { salt = s; return kvGet('check'); }).then(function (c) { chk = c; return deriveKey(pass, salt); })
+  var salt, chk, iter;
+  return kvGet('salt').then(function (s) { salt = s; return kvGet('iter'); }).then(function (n) { iter = Number(n) || 200000; return kvGet('check'); }).then(function (c) { chk = c; return deriveKey(pass, salt, iter); })
     .then(function (key) {
       return decJson(key, chk).then(function () { LB.key = key; }, function () { throw new Error('bad'); });
     })
@@ -1875,7 +2034,7 @@ function setupHtml(msg) {
     '<div class="fld"><label class="l">' + bi('رابط البوابة (Web app URL)', 'Portal URL (web app)') + '</label><input id="su" type="text" dir="ltr" value="' + esc(url) + '" placeholder="https://script.google.com/macros/s/…/exec"></div><div class="sp"></div>' +
     '<div class="fld"><label class="l">' + bi('اسم المستخدم', 'Username') + '</label><input id="lu" type="text" dir="ltr" autocapitalize="none" value="' + esc(lsGet('acs_user')) + '"></div><div class="sp"></div>' +
     '<div class="fld"><label class="l">' + bi('كلمة مرور البوابة', 'Portal password') + '</label><input id="lp" type="password" dir="ltr" autocomplete="off"></div><div class="sp"></div>' +
-    '<div class="warn-box">' + bi('اختر الآن كلمة سر لهذا الجهاز (٨ أحرف على الأقل). تُشفَّر بها بياناتك المحلية ولا يمكن استعادتها إذا نسيتها.', 'Choose a passphrase for this device (min 8 characters). It encrypts your local data and cannot be recovered if forgotten.') + '</div>' +
+    '<div class="warn-box">' + bi('اختر الآن كلمة سر لهذا الجهاز (١٠ أحرف على الأقل). تُشفَّر بها بياناتك المحلية ولا يمكن استعادتها إذا نسيتها.', 'Choose a passphrase for this device (min 10 characters). It encrypts your local data and cannot be recovered if forgotten.') + '</div>' +
     '<div class="fld"><label class="l">' + bi('كلمة سر الجهاز', 'Device passphrase') + '</label><input id="sp1" type="password" dir="ltr" autocomplete="new-password"></div><div class="sp"></div>' +
     '<div class="fld"><label class="l">' + bi('تأكيد كلمة سر الجهاز', 'Confirm passphrase') + '</label><input id="sp2" type="password" dir="ltr" autocomplete="new-password"></div><div class="sp"></div>' +
     '<button class="btn" style="width:100%" data-act="login" id="lbtn">' + bi('تفعيل', 'Activate') + '</button></div></div>';
@@ -1895,7 +2054,7 @@ function offSetup() {
   var url = $('su').value.trim(), user = $('lu').value.trim(), pw = $('lp').value, p1 = $('sp1').value, p2 = $('sp2').value;
   if (!/^https:\/\//.test(url)) return Promise.reject({ msg: 'الرابط يجب أن يبدأ بـ https:// · URL must start with https://' });
   if (!user || !pw) return Promise.reject({ msg: 'أدخل اسم المستخدم وكلمة المرور · Enter username and password' });
-  if (p1.length < 8) return Promise.reject({ msg: 'كلمة سر الجهاز أقصر من ٨ أحرف · Passphrase shorter than 8 characters' });
+  if (p1.length < 10) return Promise.reject({ msg: 'كلمة سر الجهاز أقصر من ١٠ أحرف · Passphrase shorter than 10 characters' });
   if (p1 !== p2) return Promise.reject({ msg: 'كلمتا سر الجهاز غير متطابقتين · Passphrases do not match' });
   if (!navigator.onLine) return Promise.reject({ msg: 'التفعيل يحتاج إنترنت · Activation needs internet' });
   LB.url = url;
@@ -1907,12 +2066,12 @@ function offSetup() {
   }).then(function (b) {
     boot = { user: b.user, hospitals: b.hospitals.map(function (h) { return { code: h.code, name_en: h.name_en, name_ar: h.name_ar, city: h.city, note: h.note }; }), config: b.config, years: b.years, defaultYear: b.defaultYear, fetchedAt: nowStr() };
     salt = b64e(crypto.getRandomValues(new Uint8Array(16)));
-    return deriveKey(p1, salt);
+    return deriveKey(p1, salt, OFF_ITER);
   }).then(function (key) {
     LB.key = key; LB.boot = boot;
     return Promise.all([encJson(key, { ok: 1 }), encJson(key, boot)]);
   }).then(function (e) {
-    return kvPut('salt', salt).then(function () { return kvPut('check', e[0]); }).then(function () { return kvPut('boot', e[1]); });
+    return kvPut('salt', salt).then(function () { return kvPut('iter', OFF_ITER); }).then(function () { return kvPut('check', e[0]); }).then(function () { return kvPut('boot', e[1]); });
   }).then(function () { lsSet('acs_srv', url); lsSet('acs_user', user); LB.counters = {}; LB.synced = []; LB.items = {}; LB.hasSetup = true; return saveState(); })
     .then(function () { applyUnlocked(); S.lastAct = Date.now(); if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); render(); });
 }
@@ -1939,8 +2098,8 @@ function localDo(action, p) {
   switch (action) {
     case 'bootstrap': {
       var hs = LB.boot.hospitals.map(function (h) {
-        var c = { total: 0, Draft: 0, Submitted: 0, Verified: 0, Excluded: 0 };
-        Object.keys(LB.items).forEach(function (k) { var x = LB.items[k]; if (x.kind === 'record' && x.hospital === h.code) { c.total++; c[x.status] = (c[x.status] || 0) + 1; } });
+        var c = { total: 0, Draft: 0, Submitted: 0, Verified: 0, Excluded: 0, Test: 0 };
+        Object.keys(LB.items).forEach(function (k) { var x = LB.items[k]; if (x.kind === 'record' && x.hospital === h.code && x.status !== 'Test') { c.total++; c[x.status] = (c[x.status] || 0) + 1; } });
         return { code: h.code, name_en: h.name_en, name_ar: h.name_ar, city: h.city, note: h.note, counts: c };
       });
       S.boot.hospitals = hs;
@@ -1984,13 +2143,14 @@ function localDo(action, p) {
       it = findItem(p.hospital, p.code);
       if (!it) return Promise.reject(lerr('NOT_FOUND', 'Record not found.'));
       if (it.status === 'Excluded') return Promise.reject(lerr('LOCKED', 'This chart is excluded.'));
+      if (it.status === 'Test') return Promise.reject(lerr('LOCKED', 'This chart is marked Test.'));
       var mode = p.mode === 'submit' ? 'submit' : 'draft';
       var res = acsValidate(p.values || {}, { mode: mode, year: Number(p.year) || null });
       if (res.errors.length) return Promise.resolve({ saved: false, errors: res.errors, warnings: res.warnings });
       if (mode === 'submit' && res.warnings.length && !p.ack) return Promise.resolve({ saved: false, needAck: true, warnings: res.warnings });
       it.vals = res.values; it.qc = res.warnings.map(function (w) { return w.c; }).join(';');
       if (mode === 'submit') it.status = 'Submitted';
-      if (p.ack || !res.warnings.length) it.ack = true;
+      it.ack = !!p.ack || !res.warnings.length;   /* re-evaluated on every save: a confirmation never carries over to new warnings */
       it.secs = (it.secs || 0) + Math.max(0, Math.min(3600, Math.round(Number(p.secs) || 0)));
       it.updatedAt = nowStr(); it.lastError = '';
       return persistItem(it).then(function () { return { saved: true, status: it.status, warnings: res.warnings, completeness: res.values.completeness, nr_count: res.values.nr_count, nr_fields: res.values.nr_fields }; });
@@ -2001,6 +2161,20 @@ function localDo(action, p) {
       if (!ACS_EXCL_REASONS.some(function (r) { return r.v === p.reason; })) return Promise.reject(lerr('BAD', 'Choose an exclusion reason.'));
       it.status = 'Excluded'; it.exclReason = p.reason; it.updatedAt = nowStr();
       return persistItem(it).then(function () { return { status: 'Excluded' }; });
+    }
+    case 'markTest': {
+      it = findItem(p.hospital, p.code);
+      if (!it) return Promise.reject(lerr('NOT_FOUND', 'Record not found.'));
+      if (it.status !== 'Draft' && it.status !== 'Submitted') return Promise.reject(lerr('BAD_STATE', 'Only a Draft or Submitted chart can be marked Test.'));
+      it.status = 'Test'; it.updatedAt = nowStr(); it.lastError = '';
+      return persistItem(it).then(function () { return { status: 'Test' }; });
+    }
+    case 'restore': {
+      it = findItem(p.hospital, p.code);
+      if (!it) return Promise.reject(lerr('NOT_FOUND', 'Record not found.'));
+      if (it.status !== 'Test') return Promise.reject(lerr('BAD_STATE', 'Only a Test chart can be restored offline.'));
+      it.status = 'Draft'; it.updatedAt = nowStr();
+      return persistItem(it).then(function () { return { status: 'Draft' }; });
     }
     case 'reset': {
       it = findItem(p.hospital, p.code);
@@ -2110,7 +2284,7 @@ function viewSync() {
 }
 function itemPayload(it) {
   if (it.kind === 'screenExcluded') return { uuid: it.uuid, hospital: it.hospital, year: it.year, outcome: 'Excluded', reason: it.reason, savedAt: it.updatedAt };
-  return { uuid: it.uuid, hospital: it.hospital, year: it.year, outcome: 'Included', mode: it.status === 'Submitted' ? 'submit' : 'draft', values: it.vals || {}, ack: !!it.ack, secs: it.secs || 0, savedAt: it.updatedAt, finalStatus: it.status === 'Excluded' ? 'Excluded' : '', excludeReason: it.exclReason || '' };
+  return { uuid: it.uuid, hospital: it.hospital, year: it.year, outcome: 'Included', mode: it.status === 'Submitted' ? 'submit' : 'draft', values: it.status === 'Test' ? {} : (it.vals || {}), ack: !!it.ack, secs: it.secs || 0, savedAt: it.updatedAt, finalStatus: it.status === 'Excluded' ? 'Excluded' : (it.status === 'Test' ? 'Test' : ''), excludeReason: it.exclReason || '' };
 }
 function errSummary(r) {
   if (r.needAck) return 'تحتاج تأكيد التنبيهات · needs warning confirmation — open the portal online';
